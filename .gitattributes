@@ -1,0 +1,19 @@
+# Kotlin files
+*.kt linguist-language=Kotlin 
+*.kts linguist-language=Kotlin
+
+# Gradle files
+*.gradle linguist-language=Gradle
+*.gradle.kts linguist-language=Kotlin
+
+# XML files (layouts, etc.)
+*.xml linguist-language=XML
+
+# Properly detect all files in the project
+* text=auto
+
+# Prevent vendored code from being counted in language statistics
+# Android libraries and generated files
+**/build/** linguist-generated=true
+**/.gradle/** linguist-generated=true
+**/generated/** linguist-generated=true 
