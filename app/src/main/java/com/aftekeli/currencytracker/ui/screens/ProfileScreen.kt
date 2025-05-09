@@ -1,6 +1,7 @@
 package com.aftekeli.currencytracker.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -69,6 +70,12 @@ fun ProfileScreen(navController: NavController) {
         )
         
         ProfileOption(
+            icon = Icons.Default.Settings,
+            title = "Settings",
+            onClick = { navController.navigate("settings") }
+        )
+        
+        ProfileOption(
             icon = Icons.Default.Notifications,
             title = "Notifications"
         )
@@ -126,12 +133,14 @@ fun ProfileScreen(navController: NavController) {
 @Composable
 fun ProfileOption(
     icon: ImageVector,
-    title: String
+    title: String,
+    onClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
+            .clickable { onClick?.invoke() }
     ) {
         Row(
             modifier = Modifier

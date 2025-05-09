@@ -22,6 +22,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,6 +41,7 @@ import com.aftekeli.currencytracker.ui.screens.HomeScreen
 import com.aftekeli.currencytracker.ui.screens.LoginScreen
 import com.aftekeli.currencytracker.ui.screens.ProfileScreen
 import com.aftekeli.currencytracker.ui.screens.RegisterScreen
+import com.aftekeli.currencytracker.ui.screens.SettingsScreen
 import com.aftekeli.currencytracker.ui.screens.WatchlistScreen
 import com.aftekeli.currencytracker.ui.theme.CurrencyTrackerTheme
 import com.google.firebase.auth.ktx.auth
@@ -50,7 +52,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CurrencyTrackerTheme {
+            // Get the SettingsManager instance
+            val settingsManager = remember { (application as MainApplication).settingsManager }
+            
+            // Collect the dark mode preference
+            val darkMode by settingsManager.darkMode.collectAsState(initial = false)
+            
+            CurrencyTrackerTheme(darkTheme = darkMode) {
                 CurTracApp()
             }
         }
@@ -149,6 +157,11 @@ fun CurTracApp() {
                 }
                 composable(BottomNavItem.Profile.route) {
                     ProfileScreen(navController = navController)
+                }
+                
+                // Secondary screens
+                composable("settings") {
+                    SettingsScreen(navController = navController)
                 }
             }
         }

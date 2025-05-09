@@ -16,12 +16,7 @@ fun HomeScreen(navController: NavController) {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Currency Tracker") },
-                actions = {
-                    IconButton(onClick = { /* Settings click */ }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
-                    }
-                }
+                title = { Text("Currency Tracker") }
             )
         }
     ) { paddingValues ->
