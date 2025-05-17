@@ -16,8 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 
@@ -26,6 +30,16 @@ fun ProfileScreen(navController: NavController) {
     val auth = remember { Firebase.auth }
     val currentUser = remember { auth.currentUser }
     var isLoading by remember { mutableStateOf(false) }
+    
+    // Force recomposition when user profile changes
+    var photoUrl by remember { mutableStateOf(currentUser?.photoUrl) }
+    var displayName by remember { mutableStateOf(currentUser?.displayName) }
+    
+    // Check for updates to user profile
+    LaunchedEffect(currentUser) {
+        photoUrl = currentUser?.photoUrl
+        displayName = currentUser?.displayName
+    }
     
     Column(
         modifier = Modifier
@@ -41,18 +55,30 @@ fun ProfileScreen(navController: NavController) {
                 .background(MaterialTheme.colorScheme.primaryContainer),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Profile Photo",
-                modifier = Modifier.size(60.dp),
-                tint = MaterialTheme.colorScheme.onPrimaryContainer
-            )
+            if (photoUrl != null) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(photoUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = "Profile Photo",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile Photo",
+                    modifier = Modifier.size(60.dp),
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
         }
         
         Spacer(modifier = Modifier.height(16.dp))
         
         Text(
-            text = currentUser?.displayName ?: "User",
+            text = displayName ?: "User",
             style = MaterialTheme.typography.headlineMedium
         )
         
@@ -67,7 +93,8 @@ fun ProfileScreen(navController: NavController) {
         // Profile options
         ProfileOption(
             icon = Icons.Default.AccountCircle,
-            title = "Account Settings"
+            title = "Account Settings",
+            onClick = { navController.navigate("account_settings") }
         )
         
         ProfileOption(

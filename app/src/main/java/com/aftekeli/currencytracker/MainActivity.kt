@@ -43,6 +43,7 @@ import com.aftekeli.currencytracker.ui.screens.ProfileScreen
 import com.aftekeli.currencytracker.ui.screens.RegisterScreen
 import com.aftekeli.currencytracker.ui.screens.SettingsScreen
 import com.aftekeli.currencytracker.ui.screens.WatchlistScreen
+import com.aftekeli.currencytracker.ui.screens.profile.AccountSettingsScreen
 import com.aftekeli.currencytracker.ui.theme.CurrencyTrackerTheme
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
@@ -162,6 +163,11 @@ fun CurTracApp() {
                 // Secondary screens
                 composable("settings") {
                     SettingsScreen(navController = navController)
+                }
+                
+                // Account settings screen
+                composable("account_settings") {
+                    AccountSettingsScreen(navController = navController)
                 }
             }
         }

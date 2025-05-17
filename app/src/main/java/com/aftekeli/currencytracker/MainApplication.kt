@@ -2,7 +2,10 @@ package com.aftekeli.currencytracker
 
 import android.app.Application
 import com.aftekeli.currencytracker.data.SettingsManager
+import com.google.firebase.FirebaseApp
+import dagger.hilt.android.HiltAndroidApp
 
+@HiltAndroidApp
 class MainApplication : Application() {
     // Lazy initialize the SettingsManager
     val settingsManager by lazy { SettingsManager(applicationContext) }
@@ -18,5 +21,8 @@ class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        
+        // Initialize Firebase
+        FirebaseApp.initializeApp(this)
     }
 } 

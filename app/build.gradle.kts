@@ -3,8 +3,10 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     id("com.google.gms.google-services")
-    alias(libs.plugins.kotlin.compose)
-    // Remove Kotlin Compose plugin to avoid issues with Kotlin 2.0
+    // KSP for Room
+    alias(libs.plugins.ksp)
+    // Hilt
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -42,7 +44,6 @@ android {
         compose = true
     }
     composeOptions {
-        // Use an older compiler version that's compatible with Kotlin 2.0
         kotlinCompilerExtensionVersion = "1.5.8"
     }
     
@@ -60,6 +61,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
     
     // Android Core & Compose
     implementation(libs.androidx.core.ktx)
@@ -84,6 +86,36 @@ dependencies {
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    // Retrofit & Network
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    // JSON Parsing
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Room
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
+    
+    // ViewModel & LiveData for Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+    
+    // Compose Charts
+    implementation("com.patrykandpatrick.vico:compose:1.13.1")
+    implementation("com.patrykandpatrick.vico:compose-m3:1.13.1")
+    implementation("com.patrykandpatrick.vico:core:1.13.1")
+
+    // Hilt Dependency Injection
+    implementation("com.google.dagger:hilt-android:2.49")
+    ksp("com.google.dagger:hilt-android-compiler:2.49")
+    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

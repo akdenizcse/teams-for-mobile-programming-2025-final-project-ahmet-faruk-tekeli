@@ -1,6 +1,6 @@
 [versions]
-agp = "8.9.2"
-kotlin = "2.0.0"
+agp = "8.10.0"
+kotlin = "1.9.22"
 coreKtx = "1.12.0"
 junit = "4.13.2"
 junitVersion = "1.1.5"
@@ -9,6 +9,8 @@ lifecycleRuntimeKtx = "2.6.2"
 activityCompose = "1.8.0"
 composeBom = "2023.10.00"
 googleGmsGoogleServices = "4.4.2"
+ksp = "1.9.22-1.0.17"
+hilt = "2.49"
 # We don't need to specify individual Firebase versions when using BoM
 # firebaseAuth = "23.2.0"
 
@@ -33,6 +35,8 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.compose", version = "1.5.12" }
 google-gms-google-services = { id = "com.google.gms.google-services", version.ref = "googleGmsGoogleServices" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
