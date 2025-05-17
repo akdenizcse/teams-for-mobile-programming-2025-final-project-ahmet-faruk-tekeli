@@ -29,6 +29,9 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState
     
+    // Orijinal para birimleri listesi - filtreleme işlemlerinde kullanılacak kaynak veri
+    private var _originalCurrencies = listOf<Currency>()
+    
     // Filtreleme durumu için state'ler
     private val _sortOption = MutableStateFlow(SortOption.NAME_ASC)
     val sortOption: StateFlow<SortOption> = _sortOption
@@ -63,7 +66,9 @@ class HomeViewModel @Inject constructor(
                         if (currencies.isEmpty()) {
                             _uiState.value = HomeUiState.Empty
                         } else {
-                            _uiState.value = HomeUiState.Success(applyFiltersAndSort(currencies))
+                            // Orijinal veriyi sakla
+                            _originalCurrencies = currencies
+                            _uiState.value = HomeUiState.Success(applyFiltersAndSort(_originalCurrencies))
                         }
                     }
             } catch (e: Exception) {
@@ -88,18 +93,19 @@ class HomeViewModel @Inject constructor(
             try {
                 currencyRepository.addToWatchlist(userId, symbol)
                 
-                // Update the favorite status in the UI
+                // Update the favorite status in both original list and UI
+                _originalCurrencies = _originalCurrencies.map { currency ->
+                    if (currency.symbol == symbol) {
+                        currency.copy(isFavorite = true)
+                    } else {
+                        currency
+                    }
+                }
+                
+                // Reapply filters on the updated original data
                 val currentState = _uiState.value
                 if (currentState is HomeUiState.Success) {
-                    val updatedList = currentState.currencies.map { currency ->
-                        if (currency.symbol == symbol) {
-                            currency.copy(isFavorite = true)
-                        } else {
-                            currency
-                        }
-                    }
-                    
-                    _uiState.value = HomeUiState.Success(applyFiltersAndSort(updatedList))
+                    _uiState.value = HomeUiState.Success(applyFiltersAndSort(_originalCurrencies))
                 }
             } catch (e: Exception) {
                 _uiState.value = HomeUiState.Error("Failed to add to watchlist")
@@ -112,18 +118,19 @@ class HomeViewModel @Inject constructor(
             try {
                 currencyRepository.removeFromWatchlist(userId, symbol)
                 
-                // Update the favorite status in the UI
+                // Update the favorite status in both original list and UI
+                _originalCurrencies = _originalCurrencies.map { currency ->
+                    if (currency.symbol == symbol) {
+                        currency.copy(isFavorite = false)
+                    } else {
+                        currency
+                    }
+                }
+                
+                // Reapply filters on the updated original data
                 val currentState = _uiState.value
                 if (currentState is HomeUiState.Success) {
-                    val updatedList = currentState.currencies.map { currency ->
-                        if (currency.symbol == symbol) {
-                            currency.copy(isFavorite = false)
-                        } else {
-                            currency
-                        }
-                    }
-                    
-                    _uiState.value = HomeUiState.Success(applyFiltersAndSort(updatedList))
+                    _uiState.value = HomeUiState.Success(applyFiltersAndSort(_originalCurrencies))
                 }
             } catch (e: Exception) {
                 _uiState.value = HomeUiState.Error("Failed to remove from watchlist")
@@ -144,7 +151,14 @@ class HomeViewModel @Inject constructor(
     
     fun setShowFavorites(show: Boolean) {
         _showFavorites.value = show
-        reapplyFilters()
+        
+        // Her zaman orijinal verileri kullanarak filtrele
+        if (_originalCurrencies.isNotEmpty()) {
+            _uiState.value = HomeUiState.Success(applyFiltersAndSort(_originalCurrencies))
+        } else {
+            // Orijinal veri yoksa yeniden yükle
+            loadCurrencies()
+        }
     }
     
     fun setSearchQuery(query: String) {
@@ -154,9 +168,12 @@ class HomeViewModel @Inject constructor(
     
     // Mevcut filtreleri uygula
     private fun reapplyFilters() {
-        val currentState = _uiState.value
-        if (currentState is HomeUiState.Success) {
-            _uiState.value = HomeUiState.Success(applyFiltersAndSort(currentState.currencies))
+        // Her zaman orijinal verileri kullanarak filtrele
+        if (_originalCurrencies.isNotEmpty()) {
+            _uiState.value = HomeUiState.Success(applyFiltersAndSort(_originalCurrencies))
+        } else {
+            // Orijinal veri yoksa yeniden yükle
+            loadCurrencies()
         }
     }
     

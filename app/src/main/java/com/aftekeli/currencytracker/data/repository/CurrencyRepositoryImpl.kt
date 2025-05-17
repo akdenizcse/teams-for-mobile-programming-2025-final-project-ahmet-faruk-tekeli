@@ -442,7 +442,7 @@ class CurrencyRepositoryImpl @Inject constructor(
                 isActive = true,
                 createdAt = System.currentTimeMillis()
             )
-            val localId = alertDao.insertAlert(alertEntity)
+            alertDao.insertAlert(alertEntity)
             
             // Firestore dökümanının hash kodunu dön
             return alertId.hashCode().toLong()

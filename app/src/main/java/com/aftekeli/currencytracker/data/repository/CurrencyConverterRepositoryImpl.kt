@@ -286,7 +286,7 @@ class CurrencyConverterRepositoryImpl @Inject constructor(
             )
             
             if (response.isSuccessful && response.body() != null) {
-                val currencies = CoinGeckoMapper.mapMarketDataToCurrencies(response.body()!!, "usd")
+                val currencies = CoinGeckoMapper.mapMarketDataToCurrencies(response.body()!!)
                 emit(Result.success(currencies))
                 
                 // Update cache
@@ -311,7 +311,20 @@ class CurrencyConverterRepositoryImpl @Inject constructor(
         try {
             // For now we'll just filter the cached fiat currencies using COMMON_FIATS
             if (fiatCurrenciesCache.isNotEmpty()) {
-                val popularFiats = fiatCurrenciesCache.filter { 
+                // Make sure every fiat currency has imageUrl, if not update them
+                val updatedFiats = fiatCurrenciesCache.map { currency ->
+                    if (currency.imageUrl.isNullOrEmpty() && currency.isFiat) {
+                        currency.copy(imageUrl = getFiatImageUrl(currency.id))
+                    } else {
+                        currency
+                    }
+                }
+                
+                // Update the cache with the updated currencies
+                fiatCurrenciesCache.clear()
+                fiatCurrenciesCache.addAll(updatedFiats)
+                
+                val popularFiats = updatedFiats.filter { 
                     CoinGeckoApiService.COMMON_FIATS.contains(it.id)
                 }
                 emit(Result.success(popularFiats))
@@ -331,6 +344,41 @@ class CurrencyConverterRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error fetching popular fiat currencies")
             emit(Result.failure(e))
+        }
+    }
+    
+    /**
+     * Get fiat currency image URL
+     */
+    private fun getFiatImageUrl(code: String): String {
+        return when (code.lowercase()) {
+            "usd" -> "https://wise.com/public-resources/assets/flags/rectangle/usd.png" 
+            "eur" -> "https://wise.com/public-resources/assets/flags/rectangle/eur.png"
+            "gbp" -> "https://wise.com/public-resources/assets/flags/rectangle/gbp.png"
+            "jpy" -> "https://wise.com/public-resources/assets/flags/rectangle/jpy.png"
+            "aud" -> "https://wise.com/public-resources/assets/flags/rectangle/aud.png"
+            "cad" -> "https://wise.com/public-resources/assets/flags/rectangle/cad.png"
+            "chf" -> "https://wise.com/public-resources/assets/flags/rectangle/chf.png"
+            "cny" -> "https://wise.com/public-resources/assets/flags/rectangle/cny.png"
+            "try" -> "https://wise.com/public-resources/assets/flags/rectangle/try.png"
+            "rub" -> "https://wise.com/public-resources/assets/flags/rectangle/rub.png"
+            "inr" -> "https://wise.com/public-resources/assets/flags/rectangle/inr.png"
+            "brl" -> "https://wise.com/public-resources/assets/flags/rectangle/brl.png"
+            "krw" -> "https://wise.com/public-resources/assets/flags/rectangle/krw.png"
+            "idr" -> "https://wise.com/public-resources/assets/flags/rectangle/idr.png"
+            "hkd" -> "https://wise.com/public-resources/assets/flags/rectangle/hkd.png"
+            "mxn" -> "https://wise.com/public-resources/assets/flags/rectangle/mxn.png"
+            "sgd" -> "https://wise.com/public-resources/assets/flags/rectangle/sgd.png"
+            "zar" -> "https://wise.com/public-resources/assets/flags/rectangle/zar.png"
+            "sek" -> "https://wise.com/public-resources/assets/flags/rectangle/sek.png"
+            "nok" -> "https://wise.com/public-resources/assets/flags/rectangle/nok.png"
+            "nzd" -> "https://wise.com/public-resources/assets/flags/rectangle/nzd.png"
+            "pln" -> "https://wise.com/public-resources/assets/flags/rectangle/pln.png"
+            "uah" -> "https://wise.com/public-resources/assets/flags/rectangle/uah.png"
+            "ngn" -> "https://wise.com/public-resources/assets/flags/rectangle/ngn.png"
+            "ars" -> "https://wise.com/public-resources/assets/flags/rectangle/ars.png"
+            "vnd" -> "https://wise.com/public-resources/assets/flags/rectangle/vnd.png"
+            else -> "" // Default: empty string if no logo found
         }
     }
     

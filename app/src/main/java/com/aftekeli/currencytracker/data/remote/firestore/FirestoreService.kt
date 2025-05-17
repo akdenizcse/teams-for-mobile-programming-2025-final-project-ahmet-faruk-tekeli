@@ -22,14 +22,11 @@ class FirestoreService @Inject constructor() {
     private val firestore = FirebaseFirestore.getInstance()
     
     init {
-        // Çevrimdışı veri desteği için ayarlar
-        val settings = FirebaseFirestoreSettings.Builder()
-            .setPersistenceEnabled(true)
-            .setCacheSizeBytes(FirebaseFirestoreSettings.CACHE_SIZE_UNLIMITED)
-            .build()
+        // Basit ayarları kullan, deprecated metotları kullanmadan
+        val settings = FirebaseFirestoreSettings.Builder().build()
         firestore.firestoreSettings = settings
         
-        Log.d(TAG, "FirestoreService initialized with offline persistence")
+        Log.d(TAG, "FirestoreService initialized")
     }
     
     // ===== KULLANICI PROFİLİ İŞLEMLERİ =====

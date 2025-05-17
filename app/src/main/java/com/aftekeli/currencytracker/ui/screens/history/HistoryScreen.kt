@@ -146,7 +146,6 @@ fun MarketSummarySection() {
             Spacer(modifier = Modifier.height(16.dp))
             
             // Sample chart data for BTC
-            val chartEntryModel = entryModelOf(43500.0, 44200.0, 43800.0, 45100.0, 44700.0, 46200.0, 45800.0)
             
             // Chart component (simplified placeholder)
             Box(

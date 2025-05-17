@@ -65,7 +65,7 @@ object AppModule {
     
     @Provides
     @Singleton
-    fun provideSettingsManager(@ApplicationContext context: Context): SettingsManager {
+    fun provideSettingsManager(): SettingsManager {
         return CurrencyTrackerApp.getInstance().settingsManager
     }
     

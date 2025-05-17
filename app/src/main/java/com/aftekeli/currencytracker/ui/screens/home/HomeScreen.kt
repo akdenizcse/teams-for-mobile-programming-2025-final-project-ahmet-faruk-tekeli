@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +41,20 @@ fun HomeScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Currency Tracker") },
-                actions = {
+                navigationIcon = {
+                    // Favoriler Butonu - sol tarafa taşındı
+                    IconButton(
+                        onClick = { viewModel.setShowFavorites(!showFavorites) }
+                    ) {
+                        Icon(
+                            imageVector = if (showFavorites) Icons.Filled.Favorite else Icons.Outlined.Favorite,
+                            contentDescription = "Toggle Favorites",
+                            tint = if (showFavorites) Color.Red else LocalContentColor.current,
+                            modifier = Modifier.size(if (showFavorites) 28.dp else 24.dp)
+                        )
+                    }
+                },
+                actions = {                    
                     // Filtreleme Butonu
                     IconButton(onClick = { showFilterPanel = !showFilterPanel }) {
                         Icon(
@@ -92,9 +107,7 @@ fun HomeScreen(
                     sortOption = sortOption,
                     onSortOptionChanged = { viewModel.setSortOption(it) },
                     filterType = filterType,
-                    onFilterTypeChanged = { viewModel.setFilterType(it) },
-                    showFavorites = showFavorites,
-                    onShowFavoritesChanged = { viewModel.setShowFavorites(it) }
+                    onFilterTypeChanged = { viewModel.setFilterType(it) }
                 )
             }
             
@@ -115,9 +128,7 @@ fun FilterPanel(
     sortOption: SortOption,
     onSortOptionChanged: (SortOption) -> Unit,
     filterType: FilterType,
-    onFilterTypeChanged: (FilterType) -> Unit,
-    showFavorites: Boolean,
-    onShowFavoritesChanged: (Boolean) -> Unit
+    onFilterTypeChanged: (FilterType) -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -168,28 +179,6 @@ fun FilterPanel(
                     selected = filterType == FilterType.FIAT_ONLY,
                     onClick = { onFilterTypeChanged(FilterType.FIAT_ONLY) },
                     label = { Text("Fiat") }
-                )
-            }
-            
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-            
-            // Favoriler Filtresi
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Sadece Favorileri Göster",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f)
-                )
-                
-                Switch(
-                    checked = showFavorites,
-                    onCheckedChange = onShowFavoritesChanged
                 )
             }
             

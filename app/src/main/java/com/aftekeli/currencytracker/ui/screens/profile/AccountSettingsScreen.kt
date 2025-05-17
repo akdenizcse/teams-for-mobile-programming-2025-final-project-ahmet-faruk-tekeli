@@ -402,8 +402,6 @@ fun AccountSettingsScreen(navController: NavController) {
                                     strokeWidth = 2.dp
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                            } else {
-                                // No loading indicator when not loading
                             }
                             Text("Update Name")
                         }
@@ -564,8 +562,6 @@ fun AccountSettingsScreen(navController: NavController) {
                                     strokeWidth = 2.dp
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                            } else {
-                                // No loading indicator when not loading
                             }
                             Text("Update Password")
                         }

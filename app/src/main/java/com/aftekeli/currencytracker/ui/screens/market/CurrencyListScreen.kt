@@ -8,12 +8,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.*
@@ -219,8 +219,52 @@ fun EnhancedCurrencyItem(
                             .border(1.dp, Color(0x20000000), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        // Use currency.logoUrl directly from database instead of getCurrencyLogoUrl function
-                        if (currency.logoUrl.isNotEmpty()) {
+                        // İlk önce USDT benzeri ve diğer fiat para birimlerini kontrol et
+                        if (!isCrypto) {
+                            // Fiat para birimi bayraklarını doğrudan yükle
+                            val fiatLogoUrl = when {
+                                currency.symbol.startsWith("USDTARS") || currency.symbol.endsWith("ARSUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/ars.png"
+                                currency.symbol.startsWith("USDTBRL") || currency.symbol.endsWith("BRLUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/brl.png"
+                                currency.symbol.startsWith("USDTRUB") || currency.symbol.endsWith("RUBUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/rub.png"
+                                currency.symbol.startsWith("USDTTRY") || currency.symbol.endsWith("TRYUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/try.png"
+                                currency.symbol.startsWith("USDTEUR") || currency.symbol.endsWith("EURUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/eur.png"
+                                currency.symbol.startsWith("USDTGBP") || currency.symbol.endsWith("GBPUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/gbp.png"
+                                currency.symbol.startsWith("USDTAUD") || currency.symbol.endsWith("AUDUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/aud.png"
+                                currency.symbol.startsWith("USDTCAD") || currency.symbol.endsWith("CADUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/cad.png"
+                                currency.symbol.startsWith("USDTJPY") || currency.symbol.endsWith("JPYUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/jpy.png"
+                                currency.symbol.startsWith("USDTINR") || currency.symbol.endsWith("INRUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/inr.png"
+                                currency.symbol.startsWith("USDTCNY") || currency.symbol.endsWith("CNYUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/cny.png"
+                                currency.symbol.startsWith("USDTCHF") || currency.symbol.endsWith("CHFUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/chf.png"
+                                currency.symbol.startsWith("USDTZAR") || currency.symbol.endsWith("ZARUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/zar.png"
+                                currency.symbol.startsWith("USDTNOK") || currency.symbol.endsWith("NOKUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/nok.png"
+                                currency.symbol.startsWith("USDTSEK") || currency.symbol.endsWith("SEKUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/sek.png"
+                                currency.symbol.startsWith("USDTNZD") || currency.symbol.endsWith("NZDUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/nzd.png"
+                                currency.symbol.startsWith("USDTIDR") || currency.symbol.endsWith("IDRUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/idr.png"
+                                currency.symbol.startsWith("USDTHKD") || currency.symbol.endsWith("HKDUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/hkd.png"
+                                currency.symbol.startsWith("USDTKRW") || currency.symbol.endsWith("KRWUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/krw.png"
+                                currency.symbol.startsWith("USDTSGD") || currency.symbol.endsWith("SGDUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/sgd.png"
+                                currency.symbol.startsWith("USDTMXN") || currency.symbol.endsWith("MXNUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/mxn.png"
+                                currency.symbol.startsWith("USDTPLN") || currency.symbol.endsWith("PLNUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/pln.png"
+                                currency.symbol.startsWith("USDTUAH") || currency.symbol.endsWith("UAHUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/uah.png"
+                                currency.symbol.startsWith("USDTNGN") || currency.symbol.endsWith("NGNUSDT") -> "https://wise.com/public-resources/assets/flags/rectangle/ngn.png"
+                                currency.symbol.startsWith("USDT") -> "https://cryptologos.cc/logos/tether-usdt-logo.png?v=029"
+                                else -> currency.logoUrl
+                            }
+
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(fiatLogoUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Currency logo",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .padding(2.dp)
+                            )
+                        }
+                        // İkinci olarak veritabanından gelen logo URL'sini kullan
+                        else if (currency.logoUrl.isNotEmpty()) {
                             AsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
                                     .data(currency.logoUrl)
@@ -233,7 +277,7 @@ fun EnhancedCurrencyItem(
                                     .padding(2.dp)
                             )
                         } else {
-                            // Fallback if no logo in database, then try getCurrencyLogoUrl
+                            // Fallback - getCurrencyLogoUrl yardımcı fonksiyonunu kullan
                             val logoUrl = getCurrencyLogoUrl(currency.symbol, isCrypto)
                             
                             if (logoUrl.isNotEmpty()) {
@@ -249,7 +293,7 @@ fun EnhancedCurrencyItem(
                                         .padding(2.dp)
                                 )
                             } else {
-                                // Final fallback - show text
+                                // Son çare - metni göster
                                 Text(
                                     text = getCurrencySymbolText(currency.symbol),
                                     fontSize = 16.sp,
@@ -299,17 +343,18 @@ fun EnhancedCurrencyItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Mini chart - simplified representation
+                // Trend indicator
                 Box(
                     modifier = Modifier
-                        .width(80.dp)
-                        .height(40.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(if (changePositive) Color(0x1F4CAF50) else Color(0x1FE53935)),
+                        .size(32.dp)
+                        .background(
+                            color = if (changePositive) Color(0x1F4CAF50) else Color(0x1FE53935),
+                            shape = CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = if (changePositive) Icons.Default.TrendingUp else Icons.Default.TrendingDown,
+                        imageVector = if (changePositive) Icons.AutoMirrored.Filled.TrendingUp else Icons.AutoMirrored.Filled.TrendingDown,
                         contentDescription = if (changePositive) "Uptrend" else "Downtrend",
                         tint = if (changePositive) Color(0xFF4CAF50) else Color(0xFFE53935),
                         modifier = Modifier.size(24.dp)

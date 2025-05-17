@@ -5,14 +5,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalPagerApi::class)
 @Composable
 fun MarketScreen(
-    navController: NavController,
     onCurrencySelected: (String) -> Unit
 ) {
     val tabs = listOf("Cryptocurrencies", "Fiat Currencies")
