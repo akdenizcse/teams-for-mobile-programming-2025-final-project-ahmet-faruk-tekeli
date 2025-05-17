@@ -15,5 +15,6 @@ data class CurrencyEntity(
     val changePercent24h: Double? = null,
     val volume24h: Double? = null,
     val marketCap: Double? = null,
-    val lastUpdateTime: Long = System.currentTimeMillis()
+    val lastUpdateTime: Long = System.currentTimeMillis(),
+    val logoUrl: String = ""
 ) 

@@ -1,4 +1,4 @@
-package com.aftekeli.currencytracker.ui.screens
+package com.aftekeli.currencytracker.ui.screens.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,15 +15,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.aftekeli.currencytracker.MainApplication
-import com.aftekeli.currencytracker.ui.screens.dialogs.CurrencySelectionDialog
+import com.aftekeli.currencytracker.CurrencyTrackerApp
+import com.aftekeli.currencytracker.ui.screens.settings.dialogs.CurrencySelectionDialog
 import com.aftekeli.currencytracker.ui.theme.CurrencyTrackerTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
-    val settingsManager = remember { MainApplication.getInstance().settingsManager }
+    val settingsManager = remember { CurrencyTrackerApp.getInstance().settingsManager }
     val coroutineScope = rememberCoroutineScope()
     
     // Collect settings from DataStore preferences

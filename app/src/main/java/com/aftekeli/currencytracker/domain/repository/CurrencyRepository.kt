@@ -12,6 +12,7 @@ interface CurrencyRepository {
     suspend fun getAllCurrencies(): Flow<List<Currency>>
     suspend fun getCurrencyBySymbol(symbol: String): Flow<Currency?>
     suspend fun refreshCurrencies()
+    suspend fun refreshCurrenciesIfNeeded(forceRefresh: Boolean = false): Boolean
     suspend fun refreshCurrency(symbol: String)
     
     // Candlestick chart data

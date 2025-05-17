@@ -22,6 +22,9 @@ interface CurrencyDao {
     @Query("SELECT * FROM currencies ORDER BY symbol ASC")
     fun getAllCurrencies(): Flow<List<CurrencyEntity>>
     
+    @Query("SELECT * FROM currencies ORDER BY symbol ASC")
+    suspend fun getAllCurrenciesSync(): List<CurrencyEntity>
+    
     @Query("SELECT * FROM currencies WHERE symbol IN (:symbols)")
     fun getCurrenciesBySymbols(symbols: List<String>): Flow<List<CurrencyEntity>>
     

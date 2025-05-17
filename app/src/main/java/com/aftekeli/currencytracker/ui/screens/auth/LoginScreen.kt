@@ -1,4 +1,4 @@
-package com.aftekeli.currencytracker.ui.screens
+package com.aftekeli.currencytracker.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -34,20 +36,52 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    navController: NavController,
+    viewModel: LoginViewModel = hiltViewModel()
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var successMessage by remember { mutableStateOf<String?>(null) }
     var showResetDialog by remember { mutableStateOf(false) }
     var resetEmail by remember { mutableStateOf("") }
-    var isResetLoading by remember { mutableStateOf(false) }
     
     val focusManager = LocalFocusManager.current
-    val auth = remember { Firebase.auth }
     val coroutineScope = rememberCoroutineScope()
+    
+    // ViewModel state'lerini topluyoruz
+    val loginState by viewModel.loginState.collectAsStateWithLifecycle()
+    val resetPasswordState by viewModel.resetPasswordState.collectAsStateWithLifecycle()
+    
+    // Login durumuna göre UI güncelleme
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is LoginState.Success -> {
+                // Ana sayfaya yönlendir
+                navController.navigate("home") {
+                    popUpTo("login") { inclusive = true }
+                }
+            }
+            else -> { /* İşlem yapma */ }
+        }
+    }
+    
+    // Reset password durumuna göre UI güncelleme
+    LaunchedEffect(resetPasswordState) {
+        when (resetPasswordState) {
+            is ResetPasswordState.Success -> {
+                // Dialog kapat
+                showResetDialog = false
+                
+                // Geçici olarak başarı mesajı göster
+                coroutineScope.launch {
+                    delay(5000) // 5 saniye sonra state'i sıfırla
+                    viewModel.resetState()
+                }
+            }
+            else -> { /* İşlem yapma */ }
+        }
+    }
     
     // Password Reset Dialog
     if (showResetDialog) {
@@ -90,6 +124,19 @@ fun LoginScreen(navController: NavController) {
                         shape = RoundedCornerShape(12.dp)
                     )
                     
+                    // Hata mesajı
+                    if (resetPasswordState is ResetPasswordState.Error) {
+                        Text(
+                            text = (resetPasswordState as ResetPasswordState.Error).message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            textAlign = TextAlign.Start
+                        )
+                    }
+                    
                     Spacer(modifier = Modifier.height(16.dp))
                     
                     Row(
@@ -106,46 +153,11 @@ fun LoginScreen(navController: NavController) {
                         
                         Button(
                             onClick = {
-                                if (resetEmail.isNotBlank()) {
-                                    isResetLoading = true
-                                    
-                                    auth.sendPasswordResetEmail(resetEmail)
-                                        .addOnCompleteListener { task ->
-                                            isResetLoading = false
-                                            if (task.isSuccessful) {
-                                                // Successfully sent email
-                                                showResetDialog = false
-                                                successMessage = "Password reset email sent to $resetEmail"
-                                                
-                                                // Clear the success message after a few seconds
-                                                coroutineScope.launch {
-                                                    delay(5000)
-                                                    successMessage = null
-                                                }
-                                            } else {
-                                                // Failed to send email
-                                                errorMessage = task.exception?.message ?: "Failed to send reset email"
-                                                
-                                                // Clear the error message after a few seconds
-                                                coroutineScope.launch {
-                                                    delay(5000)
-                                                    errorMessage = null
-                                                }
-                                            }
-                                        }
-                                } else {
-                                    errorMessage = "Please enter your email address"
-                                    
-                                    // Clear the error message after a few seconds
-                                    coroutineScope.launch {
-                                        delay(5000)
-                                        errorMessage = null
-                                    }
-                                }
+                                viewModel.sendPasswordResetEmail(resetEmail)
                             },
-                            enabled = !isResetLoading
+                            enabled = resetPasswordState !is ResetPasswordState.Loading
                         ) {
-                            if (isResetLoading) {
+                            if (resetPasswordState is ResetPasswordState.Loading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(18.dp),
                                     color = MaterialTheme.colorScheme.onPrimary,
@@ -161,6 +173,7 @@ fun LoginScreen(navController: NavController) {
         }
     }
     
+    // Main Login Screen
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -245,66 +258,71 @@ fun LoginScreen(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 )
                 
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Forgot Password Link
-                TextButton(
-                    onClick = { 
-                        resetEmail = email // Pre-fill with the email they've already entered
-                        showResetDialog = true 
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
+                // Hata mesajı
+                if (loginState is LoginState.Error) {
                     Text(
-                        "Forgot Password?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        text = (loginState as LoginState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        textAlign = TextAlign.Start
                     )
                 }
                 
-                Spacer(modifier = Modifier.height(24.dp))
+                // Başarı mesajı
+                if (resetPasswordState is ResetPasswordState.Success) {
+                    Text(
+                        text = "Password reset email sent. Check your inbox.",
+                        color = Color.Green,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        textAlign = TextAlign.Start
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Forgot Password Link
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = { 
+                            showResetDialog = true
+                            resetEmail = email // Mevcut email'i kopyala
+                        }
+                    ) {
+                        Text("Forgot Password?")
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 // Login Button
                 Button(
                     onClick = {
-                        if (email.isNotBlank() && password.isNotBlank()) {
-                            isLoading = true
-                            errorMessage = null
-                            
-                            auth.signInWithEmailAndPassword(email, password)
-                                .addOnCompleteListener { task ->
-                                    isLoading = false
-                                    if (task.isSuccessful) {
-                                        // Login successful, navigate to home
-                                        navController.navigate("home") {
-                                            popUpTo("login") { inclusive = true }
-                                        }
-                                    } else {
-                                        // Login failed
-                                        errorMessage = task.exception?.message ?: "Login failed"
-                                    }
-                                }
-                        } else {
-                            errorMessage = "Please enter email and password"
-                        }
+                        focusManager.clearFocus()
+                        viewModel.login(email, password)
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isLoading
+                    enabled = loginState !is LoginState.Loading
                 ) {
-                    if (isLoading) {
+                    if (loginState is LoginState.Loading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text(
-                            "Login",
-                            fontSize = 16.sp
-                        )
+                        Text("LOGIN", fontSize = 16.sp)
                     }
                 }
                 
@@ -316,56 +334,14 @@ fun LoginScreen(navController: NavController) {
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "Don't have an account?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("Don't have an account?")
                     
-                    TextButton(onClick = { navController.navigate("register") }) {
-                        Text(
-                            "Register",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                
-                // Success Message
-                successMessage?.let {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     
-                    Surface(
-                        color = Color(0xFFDFF0D8), // Light green background
-                        shape = RoundedCornerShape(8.dp)
+                    TextButton(
+                        onClick = { navController.navigate("register") }
                     ) {
-                        Text(
-                            text = it,
-                            color = Color(0xFF3C763D), // Dark green text
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-                
-                // Error Message
-                errorMessage?.let {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    Surface(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = it,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            textAlign = TextAlign.Center
-                        )
+                        Text("Register")
                     }
                 }
             }

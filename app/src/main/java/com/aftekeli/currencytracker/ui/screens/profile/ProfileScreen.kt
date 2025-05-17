@@ -1,4 +1,4 @@
-package com.aftekeli.currencytracker.ui.screens
+package com.aftekeli.currencytracker.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

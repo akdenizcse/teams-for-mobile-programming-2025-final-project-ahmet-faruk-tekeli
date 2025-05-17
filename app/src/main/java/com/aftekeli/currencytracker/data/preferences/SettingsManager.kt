@@ -1,13 +1,15 @@
-package com.aftekeli.currencytracker.data
+package com.aftekeli.currencytracker.data.preferences
 
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 // Extension property for Context to get the DataStore instance
@@ -20,6 +22,10 @@ class SettingsManager(private val context: Context) {
         val DARK_MODE = booleanPreferencesKey("dark_mode")
         val DEFAULT_CURRENCY = stringPreferencesKey("default_currency")
         val PRICE_ALERTS_ENABLED = booleanPreferencesKey("price_alerts_enabled")
+        val LAST_REFRESH_TIMESTAMP = longPreferencesKey("last_refresh_timestamp")
+        
+        // Default refresh interval - 10 minutes
+        const val DEFAULT_REFRESH_INTERVAL = 10 * 60 * 1000L
     }
 
     // Get dark mode preference as Flow
@@ -56,6 +62,26 @@ class SettingsManager(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[PRICE_ALERTS_ENABLED] = enabled
         }
+    }
+    
+    // Get last refresh timestamp
+    val lastRefreshTimestamp: Flow<Long> = context.dataStore.data.map { preferences ->
+        preferences[LAST_REFRESH_TIMESTAMP] ?: 0L
+    }
+    
+    // Update last refresh timestamp to current time
+    suspend fun updateLastRefreshTimestamp() {
+        context.dataStore.edit { preferences ->
+            preferences[LAST_REFRESH_TIMESTAMP] = System.currentTimeMillis()
+        }
+    }
+    
+    // Check if data refresh is needed based on interval
+    suspend fun isDataRefreshNeeded(refreshIntervalMs: Long = DEFAULT_REFRESH_INTERVAL): Boolean {
+        val lastRefresh = lastRefreshTimestamp.first()
+        val currentTime = System.currentTimeMillis()
+        
+        return lastRefresh == 0L || (currentTime - lastRefresh) >= refreshIntervalMs
     }
 
     // Clear all cached data

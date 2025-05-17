@@ -1,6 +1,7 @@
 package com.aftekeli.currencytracker.data.remote.api
 
 import com.aftekeli.currencytracker.data.remote.dto.PriceDto
+import com.aftekeli.currencytracker.data.remote.dto.TickerDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 
@@ -11,6 +12,12 @@ interface BinanceApiService {
     
     @GET("api/v3/ticker/price")
     suspend fun getPriceBySymbol(@Query("symbol") symbol: String): PriceDto
+    
+    @GET("api/v3/ticker/24hr")
+    suspend fun get24hTickers(): List<TickerDto>
+    
+    @GET("api/v3/ticker/24hr")
+    suspend fun get24hTickerBySymbol(@Query("symbol") symbol: String): TickerDto
     
     @GET("api/v3/klines")
     suspend fun getCandlestickData(
@@ -29,11 +36,29 @@ interface BinanceApiService {
             "LTCUSDT", "AVAXUSDT", "LINKUSDT", "UNIUSDT", "ATOMUSDT"
         )
         
-        // Fiat currency symbols paired with BTC or USDT
+        // Para birimleri - Binance API'nin desteklediği formatta
         val SUPPORTED_FIAT_SYMBOLS = listOf(
-            "BTCEUR", "BTCGBP", "BTCAUD", "BTCBRL",
-            "BTCRUB", "BTCTRY", "BTCUAH", "EURUSDT",
-            "GBPUSDT", "USDTBRL", "USDTRUB"
+            // Direkt USDT çiftleri (API'nin desteklediği şekilde)
+            "EURUSDT",    // EUR/USD
+            "GBPUSDT",    // GBP/USD
+            "AUDUSDT",    // AUD/USD
+            
+            // Ters çiftler (API formatında) - bunlar UI'da ters çevrilecek
+            "USDTBRL",    // USD/BRL olarak gösterilecek
+            "USDTRUB",    // USD/RUB olarak gösterilecek
+            "USDTTRY",    // USD/TRY olarak gösterilecek
+            "USDTARS",    // USD/ARS olarak gösterilecek
+            "USDTUAH",    // USD/UAH olarak gösterilecek
+            
+            // Stablecoin'ler
+            "BUSDUSDT",   // BUSD/USD
+            "TUSDUSDT",   // TUSD/USD
+            "USDCUSDT",   // USDC/USD
+            "DAIUSDT",    // DAI/USD
+            
+            // Diğer para çiftleri
+            "BTCEUR",     // BTC/EUR
+            "ETHEUR"      // ETH/EUR
         )
         
         // Available candlestick intervals

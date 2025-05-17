@@ -17,7 +17,7 @@ import com.aftekeli.currencytracker.data.local.entity.WatchlistEntity
         WatchlistEntity::class,
         AlertEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class CurrencyDatabase : RoomDatabase() {

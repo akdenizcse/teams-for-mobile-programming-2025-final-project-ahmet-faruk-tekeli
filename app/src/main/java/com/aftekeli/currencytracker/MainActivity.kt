@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CurrencyExchange
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -35,26 +35,30 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.aftekeli.currencytracker.ui.screens.AlertsScreen
-import com.aftekeli.currencytracker.ui.screens.ConverterScreen
-import com.aftekeli.currencytracker.ui.screens.HomeScreen
-import com.aftekeli.currencytracker.ui.screens.LoginScreen
-import com.aftekeli.currencytracker.ui.screens.ProfileScreen
-import com.aftekeli.currencytracker.ui.screens.RegisterScreen
-import com.aftekeli.currencytracker.ui.screens.SettingsScreen
-import com.aftekeli.currencytracker.ui.screens.WatchlistScreen
+import com.aftekeli.currencytracker.ui.screens.alerts.AlertsScreen
+import com.aftekeli.currencytracker.ui.screens.converter.ConvertScreen
+import com.aftekeli.currencytracker.ui.screens.home.HomeScreen
+import com.aftekeli.currencytracker.ui.screens.auth.LoginScreen
+import com.aftekeli.currencytracker.ui.screens.profile.ProfileScreen
+import com.aftekeli.currencytracker.ui.screens.auth.RegisterScreen
+import com.aftekeli.currencytracker.ui.screens.settings.SettingsScreen
 import com.aftekeli.currencytracker.ui.screens.profile.AccountSettingsScreen
 import com.aftekeli.currencytracker.ui.theme.CurrencyTrackerTheme
+import com.aftekeli.currencytracker.ui.screens.market.CurrencyDetailScreen
+import com.aftekeli.currencytracker.ui.screens.history.HistoryScreen
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import dagger.hilt.android.AndroidEntryPoint
+import androidx.hilt.navigation.compose.hiltViewModel
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             // Get the SettingsManager instance
-            val settingsManager = remember { (application as MainApplication).settingsManager }
+            val settingsManager = remember { (application as CurrencyTrackerApp).settingsManager }
             
             // Collect the dark mode preference
             val darkMode by settingsManager.darkMode.collectAsState(initial = false)
@@ -68,10 +72,10 @@ class MainActivity : ComponentActivity() {
 
 sealed class BottomNavItem(val route: String, val icon: ImageVector, val label: String) {
     object Home : BottomNavItem("home", Icons.Default.Home, "Home")
-    object Watchlist : BottomNavItem("watchlist", Icons.Default.Star, "Watchlist")
+    object History : BottomNavItem("history", Icons.Default.History, "History")
     object Converter : BottomNavItem("converter", Icons.Default.CurrencyExchange, "Converter")
     object Alerts : BottomNavItem("alerts", Icons.Default.Notifications, "Alerts")
-    object Profile : BottomNavItem("profile", Icons.Default.Person, "Profil")
+    object Profile : BottomNavItem("profile", Icons.Default.Person, "Profile")
 }
 
 @Composable
@@ -89,7 +93,7 @@ fun CurTracApp() {
     
     val navItems = listOf(
         BottomNavItem.Home,
-        BottomNavItem.Watchlist,
+        BottomNavItem.History,
         BottomNavItem.Converter,
         BottomNavItem.Alerts,
         BottomNavItem.Profile
@@ -147,11 +151,11 @@ fun CurTracApp() {
                 composable(BottomNavItem.Home.route) {
                     HomeScreen(navController = navController)
                 }
-                composable(BottomNavItem.Watchlist.route) {
-                    WatchlistScreen(navController = navController)
+                composable(BottomNavItem.History.route) {
+                    HistoryScreen(navController = navController)
                 }
                 composable(BottomNavItem.Converter.route) {
-                    ConverterScreen(navController = navController)
+                    ConvertScreen(navController = navController)
                 }
                 composable(BottomNavItem.Alerts.route) {
                     AlertsScreen(navController = navController)
@@ -168,6 +172,18 @@ fun CurTracApp() {
                 // Account settings screen
                 composable("account_settings") {
                     AccountSettingsScreen(navController = navController)
+                }
+                
+                // Currency detail screen
+                composable("currency_detail/{symbol}") { backStackEntry ->
+                    val symbol = backStackEntry.arguments?.getString("symbol")
+                    if (symbol != null) {
+                        CurrencyDetailScreen(
+                            symbol = symbol,
+                            onBackClick = { navController.popBackStack() },
+                            navController = navController
+                        )
+                    }
                 }
             }
         }

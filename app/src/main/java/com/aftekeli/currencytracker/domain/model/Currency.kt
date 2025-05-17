@@ -9,5 +9,6 @@ data class Currency(
     val volume24h: Double? = null, // Trading volume in 24h
     val marketCap: Double? = null, // Market capitalization
     val lastUpdateTime: Long = System.currentTimeMillis(),
-    val isFavorite: Boolean = false // Whether this currency is in user's watchlist
+    val isFavorite: Boolean = false, // Whether this currency is in user's watchlist
+    val logoUrl: String = "" // Logo URL from CoinGecko
 ) 

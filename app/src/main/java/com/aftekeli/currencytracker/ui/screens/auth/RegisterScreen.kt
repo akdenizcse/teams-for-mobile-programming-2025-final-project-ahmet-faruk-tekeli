@@ -1,4 +1,4 @@
-package com.aftekeli.currencytracker.ui.screens
+package com.aftekeli.currencytracker.ui.screens.auth
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +24,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.auth.ktx.userProfileChangeRequest
@@ -31,17 +33,33 @@ import com.google.firebase.ktx.Firebase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(navController: NavController) {
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: RegisterViewModel = hiltViewModel()
+) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val focusManager = LocalFocusManager.current
-    val auth = remember { Firebase.auth }
+    
+    // ViewModel state'ini topluyoruz
+    val registerState by viewModel.registerState.collectAsStateWithLifecycle()
+    
+    // Register durumuna göre UI güncelleme
+    LaunchedEffect(registerState) {
+        when (registerState) {
+            is RegisterState.Success -> {
+                // Ana sayfaya yönlendir
+                navController.navigate("home") {
+                    popUpTo("register") { inclusive = true }
+                }
+            }
+            else -> { /* İşlem yapma */ }
+        }
+    }
     
     Box(
         modifier = Modifier
@@ -173,61 +191,44 @@ fun RegisterScreen(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 )
                 
+                // Hata mesajı
+                if (registerState is RegisterState.Error) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = (registerState as RegisterState.Error).message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        textAlign = TextAlign.Start
+                    )
+                }
+                
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 // Register Button
                 Button(
                     onClick = {
+                        focusManager.clearFocus()
                         if (validateInputs(username, email, password, confirmPassword)) {
-                            isLoading = true
-                            errorMessage = null
-                            
-                            auth.createUserWithEmailAndPassword(email, password)
-                                .addOnCompleteListener { task ->
-                                    if (task.isSuccessful) {
-                                        // Update profile with username
-                                        val profileUpdates = userProfileChangeRequest {
-                                            displayName = username
-                                        }
-                                        
-                                        auth.currentUser?.updateProfile(profileUpdates)
-                                            ?.addOnCompleteListener { profileTask ->
-                                                isLoading = false
-                                                if (profileTask.isSuccessful) {
-                                                    // Registration successful, navigate to home
-                                                    navController.navigate("home") {
-                                                        popUpTo("register") { inclusive = true }
-                                                    }
-                                                } else {
-                                                    errorMessage = profileTask.exception?.message ?: "Failed to update profile"
-                                                }
-                                            }
-                                    } else {
-                                        isLoading = false
-                                        errorMessage = task.exception?.message ?: "Registration failed"
-                                    }
-                                }
-                        } else {
-                            errorMessage = "Please check your inputs. Password must be at least 6 characters and match."
+                            viewModel.register(email, password, username)
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
+                        .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !isLoading
+                    enabled = registerState !is RegisterState.Loading
                 ) {
-                    if (isLoading) {
+                    if (registerState is RegisterState.Loading) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text(
-                            "Create Account",
-                            fontSize = 16.sp
-                        )
+                        Text("REGISTER", fontSize = 16.sp)
                     }
                 }
                 
@@ -239,38 +240,14 @@ fun RegisterScreen(navController: NavController) {
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        "Already have an account?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Text("Already have an account?")
                     
-                    TextButton(onClick = { navController.navigate("login") }) {
-                        Text(
-                            "Login",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                
-                // Error Message
-                errorMessage?.let {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     
-                    Surface(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = RoundedCornerShape(8.dp)
+                    TextButton(
+                        onClick = { navController.navigate("login") }
                     ) {
-                        Text(
-                            text = it,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            textAlign = TextAlign.Center
-                        )
+                        Text("Login")
                     }
                 }
             }
@@ -278,16 +255,13 @@ fun RegisterScreen(navController: NavController) {
     }
 }
 
-private fun validateInputs(
-    username: String, 
-    email: String, 
-    password: String, 
-    confirmPassword: String
-): Boolean {
+// Validation function for register inputs
+private fun validateInputs(username: String, email: String, password: String, confirmPassword: String): Boolean {
     return when {
         username.isBlank() -> false
         email.isBlank() -> false
         password.isBlank() -> false
+        confirmPassword.isBlank() -> false
         password != confirmPassword -> false
         password.length < 6 -> false
         else -> true

@@ -1,4 +1,4 @@
-package com.aftekeli.currencytracker.ui.screens
+package com.aftekeli.currencytracker.ui.screens.watchlist
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,38 +8,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
-fun HistoryScreen(navController: NavController) {
+fun WatchlistScreen(navController: NavController) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // History title
+        // Watchlist title
         Text(
-            text = "Currency History",
+            text = "Your Watchlist",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(16.dp)
         )
         
-        // History items
+        // Watchlist items
         LazyColumn(
             modifier = Modifier.fillMaxWidth()
         ) {
-            items(10) { index ->
-                val date = Calendar.getInstance()
-                date.add(Calendar.DAY_OF_MONTH, -index)
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                val formattedDate = dateFormat.format(date.time)
-                
-                HistoryItem(
-                    date = formattedDate,
-                    currencyName = "USD/EUR",
-                    rate = "$${1.15 - (index * 0.01)}",
-                    change = if (index % 3 == 0) "+0.05%" else "-0.03%",
-                    changePositive = index % 3 == 0
+            items(5) { index ->
+                WatchlistItem(
+                    name = "Favorite Currency ${index + 1}",
+                    symbol = "FAV${index + 1}",
+                    rate = "$${7500 + index * 100}.00",
+                    change = if (index % 2 == 0) "+3.2%" else "-2.1%",
+                    changePositive = index % 2 == 0
                 )
             }
         }
@@ -47,9 +40,9 @@ fun HistoryScreen(navController: NavController) {
 }
 
 @Composable
-fun HistoryItem(
-    date: String,
-    currencyName: String,
+fun WatchlistItem(
+    name: String,
+    symbol: String,
     rate: String,
     change: String,
     changePositive: Boolean
@@ -63,17 +56,18 @@ fun HistoryItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column {
                 Text(
-                    text = date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = currencyName,
-                    style = MaterialTheme.typography.titleMedium
+                    text = symbol,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
