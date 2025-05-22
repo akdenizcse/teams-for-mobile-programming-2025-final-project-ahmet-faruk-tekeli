@@ -1,0 +1,82 @@
+[versions]
+# Always check for the latest stable versions:
+# AGP: https://developer.android.com/studio/releases/gradle-plugin
+# Kotlin: https://kotlinlang.org/docs/releases.html#release-details
+# androidx libraries: https://developer.android.com/jetpack/androidx/versions
+# Compose BOM: https://developer.android.com/jetpack/compose/bom/bom-mapping
+
+agp = "8.4.1"  # Example: Latest stable AGP (as of mid-2024)
+kotlin = "2.0.0" # Example: Latest stable Kotlin (as of mid-2024)
+hilt = "2.51.1" # Example: Latest stable Hilt
+googleGmsServicesPlugin = "4.4.2" # Your specified version
+
+coreKtx = "1.13.1"
+junit = "4.13.2"
+androidxJunit = "1.1.5" # Renamed for clarity (was junitVersion)
+espressoCore = "3.5.1"
+lifecycleRuntimeKtx = "2.8.2" # Aligns with other lifecycle 2.8.x
+activityCompose = "1.9.0"
+composeBom = "2024.06.00" # Example: Latest stable Compose BOM (as of mid-2024)
+# Kotlin 2.0.0 için KSP sürümü (GitHub'dan en güncelini kontrol et: https://github.com/google/ksp/releases)
+ksp = "2.0.0-1.0.21"
+# Add other specific versions if needed, e.g., for Firebase, Navigation, etc.
+# firebaseBom = "33.1.0"
+# navigationCompose = "2.7.7"
+# lifecycleViewModelCompose = "2.8.2"
+# hiltNavigationCompose = "1.2.0"
+# coroutines = "1.8.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+
+# Compose
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" } # For debug builds
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" } # For debug builds
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" } # For androidTest
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
+
+# Hilt (add these if not already covered by your app-level dependencies)
+# hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+# hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+# androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+
+
+# Firebase (add these, your app-level gradle has them)
+# firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+# firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+# firebase-auth-ktx = { group = "com.google.firebase", name = "firebase-auth-ktx" }
+# firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+# play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version = "21.2.0" } # Or manage with a version ref
+
+# Navigation (add these)
+# androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+
+# Lifecycle Compose (add these)
+# androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleViewModelCompose" }
+# androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleViewModelCompose" } # Often same version as viewmodel-compose
+
+# Coroutines (add these)
+# kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+# kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinCompose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# Removed kotlin-compose as AGP + buildFeatures.compose=true handles it for Android.
+# If you had non-Android Kotlin modules using Compose, you'd keep it:
+# kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" } # Check compatibility with Compose Compiler Extension
+
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+google-gms-services = { id = "com.google.gms.google-services", version.ref = "googleGmsServicesPlugin" }
+googleDevtoolsKsp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
