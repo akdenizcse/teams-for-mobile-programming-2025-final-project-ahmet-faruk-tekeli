@@ -257,11 +257,11 @@ class FavoritesViewModel @Inject constructor(
                 Log.d(TAG, "Refreshing market tickers")
                 val refreshResult = coinRepository.refreshMarketTickers()
                 
-                if (refreshResult is Result.Error) {
-                    Log.e(TAG, "Failed to refresh market tickers", refreshResult.exception)
+                if (refreshResult.isFailure) {
+                    Log.e(TAG, "Failed to refresh market tickers", refreshResult.exceptionOrNull())
                     _uiState.update { 
                         it.copy(
-                            errorMessage = "Failed to refresh market data: ${refreshResult.exception.message}"
+                            errorMessage = "Failed to refresh market data: ${refreshResult.exceptionOrNull()?.message}"
                         )
                     }
                     return@launch

@@ -101,7 +101,11 @@ class UserRepositoryImpl @Inject constructor(
             val userDocument = usersCollection.document(userId).get().await()
             
             if (userDocument.exists()) {
-                val favoriteSymbols = userDocument.get("favorite_symbols") as? List<String> ?: emptyList()
+                val favoriteSymbolsRaw = userDocument.get("favorite_symbols")
+                val favoriteSymbols = when {
+                    favoriteSymbolsRaw is List<*> -> favoriteSymbolsRaw.filterIsInstance<String>()
+                    else -> emptyList()
+                }
                 
                 // Clear existing favorites for this user and add the ones from Firestore
                 favoriteCoinDao.clearUserFavorites(userId)
