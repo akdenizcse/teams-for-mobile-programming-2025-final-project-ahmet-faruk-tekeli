@@ -90,10 +90,7 @@ fun CoinDetailScreen(
         }
     }
     
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 title = { 
@@ -104,7 +101,6 @@ fun CoinDetailScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
-                scrollBehavior = scrollBehavior,
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
