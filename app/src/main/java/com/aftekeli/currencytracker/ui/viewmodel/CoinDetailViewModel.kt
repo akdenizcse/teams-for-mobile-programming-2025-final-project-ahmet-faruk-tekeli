@@ -8,21 +8,17 @@ import com.aftekeli.currencytracker.data.model.ChartDataPoint
 import com.aftekeli.currencytracker.data.model.Coin
 import com.aftekeli.currencytracker.data.repository.CoinRepository
 import com.aftekeli.currencytracker.data.repository.UserRepository
-import com.aftekeli.currencytracker.util.Result
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.supervisorScope
+import javax.inject.Inject
 
 @HiltViewModel
 class CoinDetailViewModel @Inject constructor(

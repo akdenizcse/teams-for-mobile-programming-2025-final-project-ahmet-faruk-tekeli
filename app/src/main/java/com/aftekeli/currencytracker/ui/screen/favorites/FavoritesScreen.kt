@@ -13,14 +13,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -51,23 +56,53 @@ fun FavoritesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
     
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (currentUser == null) {
-            // Guest user view - Show login prompt
-            GuestFavoritesContent {
-                navController.navigate(ScreenRoutes.LoginScreen.route)
-            }
-        } else {
-            // Authenticated user view
-            AuthenticatedFavoritesContent(
-                uiState = uiState,
-                onRefresh = { viewModel.refreshFavorites() },
-                onCoinClick = { coin ->
-                    navController.navigate(
-                        "${ScreenRoutes.CoinDetailScreen.route}/${coin.symbol}"
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { 
+                    Text(
+                        text = "Favorites", 
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
                     )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                actions = {
+                    IconButton(onClick = { viewModel.refreshFavorites() }) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh"
+                        )
+                    }
                 }
             )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            if (currentUser == null) {
+                // Guest user view - Show login prompt
+                GuestFavoritesContent {
+                    navController.navigate(ScreenRoutes.LoginScreen.route)
+                }
+            } else {
+                // Authenticated user view
+                AuthenticatedFavoritesContent(
+                    uiState = uiState,
+                    onRefresh = { viewModel.refreshFavorites() },
+                    onCoinClick = { coin ->
+                        navController.navigate(
+                            "${ScreenRoutes.CoinDetailScreen.route}/${coin.symbol}"
+                        )
+                    }
+                )
+            }
         }
     }
 }
