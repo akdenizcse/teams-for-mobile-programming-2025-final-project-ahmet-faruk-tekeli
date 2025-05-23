@@ -10,6 +10,7 @@ sealed class ScreenRoutes(val route: String) {
     object FavoritesScreen : ScreenRoutes("favorites_screen")
     object ConverterScreen : ScreenRoutes("converter_screen")
     object ProfileScreen : ScreenRoutes("profile_screen")
+    object AlarmsScreen : ScreenRoutes("alarms_screen")
     
     // Detail screens
     object CoinDetailScreen : ScreenRoutes("coin_detail_screen")

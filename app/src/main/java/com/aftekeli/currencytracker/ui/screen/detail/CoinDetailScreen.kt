@@ -16,22 +16,32 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
@@ -39,6 +49,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,11 +57,13 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aftekeli.currencytracker.data.model.AlertCondition
 import com.aftekeli.currencytracker.ui.viewmodel.CoinDetailViewModel
 import com.aftekeli.currencytracker.util.getCoinLogoResource
 import com.github.mikephil.charting.charts.LineChart
@@ -72,6 +85,18 @@ fun CoinDetailScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    // Price alert success message
+    LaunchedEffect(uiState.showAlertSuccessMessage) {
+        if (uiState.showAlertSuccessMessage) {
+            snackbarHostState.showSnackbar(
+                message = "Price alert set successfully!",
+                actionLabel = "OK"
+            )
+            viewModel.clearAlertSuccessMessage()
+        }
+    }
     
     // Pull to refresh state
     val pullRefreshState = rememberPullToRefreshState()
@@ -91,6 +116,23 @@ fun CoinDetailScreen(
     }
     
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    
+    // Alert Dialog for setting price alert
+    if (uiState.showAlertDialog) {
+        PriceAlertDialog(
+            coinSymbol = uiState.coinSymbol,
+            coinBaseAsset = uiState.currentCoin?.baseAsset ?: "",
+            currentPrice = uiState.currentCoin?.lastPrice ?: 0.0,
+            targetPrice = uiState.alertTargetPrice,
+            onTargetPriceChange = { viewModel.onAlertTargetPriceChanged(it) },
+            selectedCondition = uiState.alertCondition,
+            onConditionChange = { viewModel.onAlertConditionChanged(it) },
+            errorMessage = uiState.alertDialogError,
+            isLoading = uiState.isSubmittingAlert,
+            onConfirm = { viewModel.createPriceAlert() },
+            onDismiss = { viewModel.dismissSetAlertDialog() }
+        )
+    }
     
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -123,6 +165,20 @@ fun CoinDetailScreen(
                     }
                 }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
+        floatingActionButton = {
+            if (!uiState.isLoadingCoin && uiState.currentCoin != null) {
+                ExtendedFloatingActionButton(
+                    onClick = { viewModel.showSetAlertDialog() },
+                    icon = { Icon(Icons.Default.Notifications, contentDescription = "Set Price Alert") },
+                    text = { Text("Set Price Alert") },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
         }
     ) { innerPadding ->
         Box(
@@ -466,6 +522,9 @@ fun CoinDetailScreen(
                         }
                     }
                 }
+                
+                // Adding some bottom padding for the FAB
+                Spacer(modifier = Modifier.height(80.dp))
             }
             
             // Pull to refresh indicator
@@ -477,6 +536,127 @@ fun CoinDetailScreen(
             )
         }
     }
+}
+
+@Composable
+fun PriceAlertDialog(
+    coinSymbol: String,
+    coinBaseAsset: String,
+    currentPrice: Double,
+    targetPrice: String,
+    onTargetPriceChange: (String) -> Unit,
+    selectedCondition: AlertCondition,
+    onConditionChange: (AlertCondition) -> Unit,
+    errorMessage: String?,
+    isLoading: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = { Text(text = "Set Price Alert for $coinBaseAsset") },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Current price: ${formatPrice(currentPrice)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Text(
+                    text = "Alert me when price:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                // Alert condition selection
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = selectedCondition == AlertCondition.ABOVE,
+                        onClick = { onConditionChange(AlertCondition.ABOVE) }
+                    )
+                    Text(
+                        text = "Rises above",
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp),
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                }
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(
+                        selected = selectedCondition == AlertCondition.BELOW,
+                        onClick = { onConditionChange(AlertCondition.BELOW) }
+                    )
+                    Text(
+                        text = "Falls below",
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 8.dp),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Target price input
+                OutlinedTextField(
+                    value = targetPrice,
+                    onValueChange = onTargetPriceChange,
+                    label = { Text("Target Price") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    isError = errorMessage != null,
+                    singleLine = true
+                )
+                
+                if (errorMessage != null) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                
+                if (isLoading) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                enabled = !isLoading
+            ) {
+                Text("Set Alert")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

@@ -4,11 +4,15 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aftekeli.currencytracker.data.model.AlertCondition
 import com.aftekeli.currencytracker.data.model.ChartDataPoint
 import com.aftekeli.currencytracker.data.model.Coin
+import com.aftekeli.currencytracker.data.model.PriceAlert
+import com.aftekeli.currencytracker.data.repository.AlertRepository
 import com.aftekeli.currencytracker.data.repository.CoinRepository
 import com.aftekeli.currencytracker.data.repository.UserRepository
 import com.aftekeli.currencytracker.util.Result
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +32,7 @@ import kotlinx.coroutines.supervisorScope
 class CoinDetailViewModel @Inject constructor(
     private val coinRepository: CoinRepository,
     private val userRepository: UserRepository,
+    private val alertRepository: AlertRepository,
     private val auth: FirebaseAuth,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -245,6 +250,88 @@ class CoinDetailViewModel @Inject constructor(
         }
     }
     
+    // Price Alert Dialog Functions
+    fun showSetAlertDialog() {
+        _uiState.update { it.copy(
+            showAlertDialog = true,
+            alertTargetPrice = it.currentCoin?.lastPrice?.toString() ?: "",
+            alertCondition = AlertCondition.ABOVE, 
+            alertDialogError = null
+        )}
+    }
+    
+    fun dismissSetAlertDialog() {
+        _uiState.update { it.copy(
+            showAlertDialog = false,
+            alertDialogError = null
+        )}
+    }
+    
+    fun onAlertConditionChanged(newCondition: AlertCondition) {
+        _uiState.update { it.copy(alertCondition = newCondition) }
+    }
+    
+    fun onAlertTargetPriceChanged(newPrice: String) {
+        _uiState.update { it.copy(alertTargetPrice = newPrice) }
+    }
+    
+    fun createPriceAlert() {
+        val currentUser = auth.currentUser ?: run {
+            _uiState.update { it.copy(alertDialogError = "User not logged in") }
+            return
+        }
+        
+        val currentCoin = _uiState.value.currentCoin ?: run {
+            _uiState.update { it.copy(alertDialogError = "Coin data not available") }
+            return
+        }
+        
+        val targetPriceStr = _uiState.value.alertTargetPrice
+        val targetPrice = targetPriceStr.toDoubleOrNull()
+        if (targetPrice == null || targetPrice <= 0) {
+            _uiState.update { it.copy(alertDialogError = "Please enter a valid price") }
+            return
+        }
+        
+        // Create alert data
+        val priceAlert = PriceAlert(
+            userId = currentUser.uid,
+            coinSymbol = currentCoin.symbol,
+            baseAsset = currentCoin.baseAsset,
+            targetPrice = targetPrice,
+            condition = _uiState.value.alertCondition,
+            isActive = true,
+            createdAt = Timestamp.now()
+        )
+        
+        _uiState.update { it.copy(isSubmittingAlert = true, alertDialogError = null) }
+        
+        viewModelScope.launch {
+            // Fix: Filter out null values from the map before passing it to the repository
+            val alertData = priceAlert.toMap().filterValues { it != null } as Map<String, Any>
+            
+            when (val result = alertRepository.addPriceAlert(currentUser.uid, alertData)) {
+                is Result.Success -> {
+                    _uiState.update { it.copy(
+                        isSubmittingAlert = false,
+                        showAlertDialog = false,
+                        showAlertSuccessMessage = true
+                    )}
+                }
+                is Result.Error -> {
+                    _uiState.update { it.copy(
+                        isSubmittingAlert = false,
+                        alertDialogError = result.exception.message ?: "Failed to create alert"
+                    )}
+                }
+            }
+        }
+    }
+    
+    fun clearAlertSuccessMessage() {
+        _uiState.update { it.copy(showAlertSuccessMessage = false) }
+    }
+    
     private fun getApiInterval(displayInterval: String): String {
         return when (displayInterval) {
             "1H" -> "1h"
@@ -273,5 +360,12 @@ data class CoinDetailUiState(
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
     val chartErrorMessage: String? = null,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    // Price Alert Dialog State
+    val showAlertDialog: Boolean = false,
+    val alertTargetPrice: String = "",
+    val alertCondition: AlertCondition = AlertCondition.ABOVE,
+    val alertDialogError: String? = null,
+    val isSubmittingAlert: Boolean = false,
+    val showAlertSuccessMessage: Boolean = false
 ) 

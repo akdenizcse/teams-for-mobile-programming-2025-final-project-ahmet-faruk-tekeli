@@ -1,5 +1,7 @@
 package com.aftekeli.currencytracker.di
 
+import com.aftekeli.currencytracker.data.repository.AlertRepository
+import com.aftekeli.currencytracker.data.repository.AlertRepositoryImpl
 import com.aftekeli.currencytracker.data.repository.AuthRepository
 import com.aftekeli.currencytracker.data.repository.AuthRepositoryImpl
 import com.aftekeli.currencytracker.data.repository.CoinRepository
@@ -39,6 +41,12 @@ abstract class RepositoryModule {
     abstract fun bindUserRepository(
         userRepositoryImpl: UserRepositoryImpl
     ): UserRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindAlertRepository(
+        alertRepositoryImpl: AlertRepositoryImpl
+    ): AlertRepository
 }
 
 @Module

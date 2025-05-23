@@ -6,6 +6,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.aftekeli.currencytracker.ui.navigation.ScreenRoutes
+import com.aftekeli.currencytracker.ui.screen.alarms.AlarmsScreen
 import com.aftekeli.currencytracker.ui.screen.converter.ConverterScreen
 import com.aftekeli.currencytracker.ui.screen.favorites.FavoritesScreen
 import com.aftekeli.currencytracker.ui.screen.markets.MarketsScreen
@@ -75,6 +77,13 @@ fun MainScreen(
                     authViewModel = authViewModel
                 )
             }
+            
+            composable(ScreenRoutes.AlarmsScreen.route) {
+                AlarmsScreen(
+                    navController = parentNavController,
+                    authViewModel = authViewModel
+                )
+            }
         }
     }
 }
@@ -96,6 +105,11 @@ fun BottomNavBar(navController: NavHostController) {
             title = "Favorites",
             icon = Icons.Filled.Favorite,
             route = ScreenRoutes.FavoritesScreen.route
+        ),
+        BottomNavItem(
+            title = "Alarms",
+            icon = Icons.Filled.Notifications,
+            route = ScreenRoutes.AlarmsScreen.route
         ),
         BottomNavItem(
             title = "Converter",
