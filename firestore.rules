@@ -4,55 +4,53 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Allow users to read/write their own user documents
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     
     // Comment rules for the discussion forum
     match /comments/{commentId} {
       // Allow authenticated users to read all comments
-      allow read: if request.auth != null;
+      allow read: if true;
       
       // Allow authenticated users to create new comments
       // but ensure they can only set their own userId
-      allow create: if request.auth != null 
-        && request.auth.uid == request.resource.data.userId
-        && validateCommentData(request.resource.data);
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
       
       // Allow users to update only their own comments
-      allow update: if request.auth != null 
-        && request.auth.uid == resource.data.userId
-        && validateCommentUpdate(request.resource.data, resource.data);
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
       
       // Allow users to delete only their own comments
-      allow delete: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
     // Other existing collections (favorites, etc.)
-    match /favorites/{favoriteId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+    match /favoriteCoins/{docId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow write: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
     
-    // Helper functions for comment validation
-    function validateCommentData(data) {
-      return data.keys().hasAll(['coinId', 'userId', 'userName', 'userEmail', 'text', 'timestamp', 'isEdited']) &&
-             data.coinId is string && data.coinId.size() > 0 &&
-             data.userId is string && data.userId.size() > 0 &&
-             data.userName is string &&
-             data.userEmail is string &&
-             data.text is string && data.text.size() > 0 && data.text.size() <= 1000 &&
-             data.timestamp is timestamp &&
-             data.isEdited is bool;
+    // Portföy öğeleri güvenlik kuralları
+    match /portfolios/{portfolioId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
-    function validateCommentUpdate(newData, oldData) {
-      return newData.coinId == oldData.coinId &&
-             newData.userId == oldData.userId &&
-             newData.userName == oldData.userName &&
-             newData.userEmail == oldData.userEmail &&
-             newData.text is string && newData.text.size() > 0 && newData.text.size() <= 1000 &&
-             newData.isEdited is bool &&
-             (newData.isEdited == true || newData.isEdited == oldData.isEdited);
+    // Cüzdan güvenlik kuralları
+    match /wallets/{walletId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+    
+    // İşlemler için güvenlik kuralları
+    match /transactions/{transactionId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow update: if false; // İşlemler değiştirilemez
     }
   }
 } 

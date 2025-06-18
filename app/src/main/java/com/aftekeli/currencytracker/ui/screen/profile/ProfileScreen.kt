@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
@@ -119,7 +120,8 @@ fun ProfileScreen(
                 },
                 onLogout = {
                     viewModel.logout {}  // No navigation in the callback - we'll stay on this screen
-                }
+                },
+                navController = navController
             )
         } else {
             // Guest user view
@@ -150,7 +152,8 @@ fun AuthenticatedProfileContent(
     onThemeSettingChange: (ThemeSetting) -> Unit,
     onChangePassword: (String, String, String) -> Unit,
     onResetPasswordChangeState: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    navController: NavController
 ) {
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -211,6 +214,21 @@ fun AuthenticatedProfileContent(
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
+                
+                // Portfolio Button (NEW)
+                Button(
+                    onClick = { navController.navigate(ScreenRoutes.PortfolioScreen.route) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountBalance,
+                        contentDescription = "Portfolio",
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("My Portfolio")
+                }
+                
+                Spacer(modifier = Modifier.height(8.dp))
                 
                 // Change Password Button
                 OutlinedButton(

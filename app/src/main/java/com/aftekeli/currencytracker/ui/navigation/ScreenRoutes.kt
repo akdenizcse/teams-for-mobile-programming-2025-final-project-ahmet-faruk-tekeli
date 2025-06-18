@@ -14,6 +14,9 @@ sealed class ScreenRoutes(val route: String) {
     // Detail screens
     object CoinDetailScreen : ScreenRoutes("coin_detail_screen")
     
+    // Portfolio screen
+    object PortfolioScreen : ScreenRoutes("portfolio_screen")
+    
     // Helper function for navigating to coin detail with argument
     fun coinDetailRoute(coinSymbol: String): String {
         return "${CoinDetailScreen.route}/$coinSymbol"

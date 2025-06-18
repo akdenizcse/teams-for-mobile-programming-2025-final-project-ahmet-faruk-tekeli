@@ -13,7 +13,11 @@ import com.aftekeli.currencytracker.ui.screen.auth.LoginScreen
 import com.aftekeli.currencytracker.ui.screen.auth.RegisterScreen
 import com.aftekeli.currencytracker.ui.screen.detail.CoinDetailScreen
 import com.aftekeli.currencytracker.ui.screen.main.MainScreen
+import com.aftekeli.currencytracker.ui.screen.profile.PortfolioScreen
 import com.aftekeli.currencytracker.ui.viewmodel.AuthViewModel
+import com.aftekeli.currencytracker.ui.viewmodel.MarketsViewModel
+import com.google.firebase.auth.FirebaseAuth
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun AppNavigation(
@@ -82,6 +86,19 @@ fun AppNavigation(
                 onBackClick = {
                     navController.popBackStack()
                 }
+            )
+        }
+        
+        // Portfolio Screen
+        composable(ScreenRoutes.PortfolioScreen.route) {
+            val marketsViewModel: MarketsViewModel = hiltViewModel()
+            val marketPrices = marketsViewModel.uiState.value.coins.associate { coin ->
+                coin.symbol to coin.lastPrice.toDouble()
+            }
+            
+            PortfolioScreen(
+                userId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
+                marketPrices = marketPrices
             )
         }
     }

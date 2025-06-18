@@ -1,6 +1,7 @@
 package com.aftekeli.currencytracker.ui.screen.detail
 
 import android.graphics.Color
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,11 +42,16 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color as ComposeColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -52,7 +60,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aftekeli.currencytracker.ui.components.CommentSection
+import com.aftekeli.currencytracker.ui.components.TradingDialog
 import com.aftekeli.currencytracker.ui.viewmodel.CoinDetailViewModel
+import com.aftekeli.currencytracker.ui.viewmodel.PortfolioViewModel
 import com.aftekeli.currencytracker.util.getCoinLogoResource
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
@@ -71,13 +81,42 @@ import kotlin.math.abs
 @Composable
 fun CoinDetailScreen(
     viewModel: CoinDetailViewModel = hiltViewModel(),
+    portfolioViewModel: PortfolioViewModel = hiltViewModel(),
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val portfolioState by portfolioViewModel.uiState.collectAsStateWithLifecycle()
     val currentUser = FirebaseAuth.getInstance().currentUser
+    val context = LocalContext.current
+    
+    // Trading dialog state
+    var showBuyDialog by remember { mutableStateOf(false) }
+    var showSellDialog by remember { mutableStateOf(false) }
     
     // Pull to refresh state
     val pullRefreshState = rememberPullToRefreshState()
+    
+    // Initialize with user data if logged in
+    LaunchedEffect(currentUser) {
+        currentUser?.uid?.let { userId ->
+            portfolioViewModel.loadUserData(userId)
+            portfolioViewModel.createWalletIfNeeded(userId)
+        }
+    }
+    
+    // Handle buy/sell events
+    LaunchedEffect(Unit) {
+        portfolioViewModel.eventFlow.collect { event ->
+            when (event) {
+                is com.aftekeli.currencytracker.ui.viewmodel.PortfolioEvent.Success -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+                is com.aftekeli.currencytracker.ui.viewmodel.PortfolioEvent.Error -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
     
     // Handle manual pull-to-refresh gesture
     if (pullRefreshState.isRefreshing) {
@@ -399,6 +438,34 @@ fun CoinDetailScreen(
                                         style = MaterialTheme.typography.bodyMedium
                                     )
                                 }
+                                
+                                // Add Al/Sat Butonları
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Button(
+                                        onClick = { showBuyDialog = true },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = ComposeColor(0xFF4CAF50) // Green color
+                                        )
+                                    ) {
+                                        Text("Al")
+                                    }
+                                    
+                                    Button(
+                                        onClick = { showSellDialog = true },
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = ComposeColor(0xFFF44336) // Red color
+                                        )
+                                    ) {
+                                        Text("Sat")
+                                    }
+                                }
                             }
                         }
                     }
@@ -490,6 +557,66 @@ fun CoinDetailScreen(
                 modifier = Modifier.align(Alignment.TopCenter),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+            )
+        }
+    }
+    
+    // Show trading dialogs
+    uiState.currentCoin?.let { coin ->
+        val currentPrice = coin.lastPrice.toDouble()
+        val baseAsset = coin.baseAsset
+        val symbol = coin.symbol
+        
+        // Dosyadaki portföy öğesini bul
+        val portfolioItem = portfolioState.portfolio.find { it.symbol == symbol }
+        
+        // Al dialog
+        if (showBuyDialog && currentUser != null) {
+            TradingDialog(
+                symbol = symbol,
+                baseAsset = baseAsset,
+                currentPrice = currentPrice,
+                walletBalance = portfolioState.wallet.balance,
+                isBuy = true,
+                onDismiss = { showBuyDialog = false },
+                onConfirm = { amount ->
+                    currentUser.uid.let { userId ->
+                        portfolioViewModel.buyCoin(
+                            userId = userId,
+                            symbol = symbol,
+                            baseAsset = baseAsset,
+                            amount = amount,
+                            price = currentPrice
+                        )
+                    }
+                    showBuyDialog = false
+                }
+            )
+        }
+        
+        // Sat dialog
+        if (showSellDialog && currentUser != null) {
+            val availableAmount = portfolioItem?.amount ?: 0.0
+            
+            TradingDialog(
+                symbol = symbol,
+                baseAsset = baseAsset,
+                currentPrice = currentPrice,
+                availableAmount = availableAmount,
+                isBuy = false,
+                onDismiss = { showSellDialog = false },
+                onConfirm = { amount ->
+                    currentUser.uid.let { userId ->
+                        portfolioViewModel.sellCoin(
+                            userId = userId,
+                            symbol = symbol,
+                            baseAsset = baseAsset,
+                            amount = amount,
+                            price = currentPrice
+                        )
+                    }
+                    showSellDialog = false
+                }
             )
         }
     }
@@ -611,5 +738,13 @@ private fun formatCount(count: Long): String {
         count >= 1_000_000 -> "%.2fM".format(count / 1_000_000.0)
         count >= 1_000 -> "%.2fK".format(count / 1_000.0)
         else -> count.toString()
+    }
+}
+
+private fun formatPrice(price: String): String {
+    return try {
+        "$${price.toDouble()}"
+    } catch (e: Exception) {
+        price
     }
 } 
