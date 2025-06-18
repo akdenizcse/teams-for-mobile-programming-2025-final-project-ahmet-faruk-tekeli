@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aftekeli.currencytracker.data.model.ChartDataPoint
 import com.aftekeli.currencytracker.data.model.Coin
+import com.aftekeli.currencytracker.data.model.Comment
 import com.aftekeli.currencytracker.data.repository.CoinRepository
+import com.aftekeli.currencytracker.data.repository.CommentRepository
 import com.aftekeli.currencytracker.data.repository.UserRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,6 +26,7 @@ import javax.inject.Inject
 class CoinDetailViewModel @Inject constructor(
     private val coinRepository: CoinRepository,
     private val userRepository: UserRepository,
+    private val commentRepository: CommentRepository,
     private val auth: FirebaseAuth,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -33,12 +36,14 @@ class CoinDetailViewModel @Inject constructor(
 
     private val coinSymbol: String = checkNotNull(savedStateHandle["coinSymbol"])
     private var refreshJob: Job? = null
+    private var commentsJob: Job? = null
     
     init {
         _uiState.update { it.copy(coinSymbol = coinSymbol) }
         fetchCoinDetails(coinSymbol)
         fetchHistoricalData(coinSymbol, DEFAULT_INTERVAL)
         observeFavoriteStatus()
+        observeComments()
     }
     
     private fun observeFavoriteStatus() {
@@ -49,6 +54,115 @@ class CoinDetailViewModel @Inject constructor(
                 _uiState.update { it.copy(isFavorite = isFavorite) }
             }
         }
+    }
+    
+    private fun observeComments() {
+        // Only observe comments if user is logged in
+        if (auth.currentUser == null) {
+            Log.d(TAG, "User not logged in, skipping comment observation")
+            return
+        }
+        
+        commentsJob = viewModelScope.launch {
+            commentRepository.getCommentsForCoin(coinSymbol).collect { result ->
+                result.fold(
+                    onSuccess = { comments ->
+                        Log.d(TAG, "Received ${comments.size} comments for $coinSymbol")
+                        _uiState.update { 
+                            it.copy(
+                                comments = comments,
+                                isLoadingComments = false,
+                                commentError = null
+                            ) 
+                        }
+                    },
+                    onFailure = { exception ->
+                        Log.e(TAG, "Error observing comments: ${exception.message}")
+                        _uiState.update { 
+                            it.copy(
+                                isLoadingComments = false,
+                                commentError = exception.message ?: "Failed to load comments"
+                            ) 
+                        }
+                    }
+                )
+            }
+        }
+    }
+    
+    fun addComment(text: String) {
+        val user = auth.currentUser
+        if (user == null) {
+            _uiState.update { it.copy(commentError = "Please log in to comment") }
+            return
+        }
+        
+        if (text.isBlank()) {
+            _uiState.update { it.copy(commentError = "Comment cannot be empty") }
+            return
+        }
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isAddingComment = true, commentError = null) }
+            
+            val comment = Comment.createNew(
+                coinId = coinSymbol,
+                userId = user.uid,
+                userName = user.displayName ?: "Anonymous",
+                userEmail = user.email ?: "",
+                text = text.trim()
+            )
+            
+            commentRepository.addComment(comment).fold(
+                onSuccess = {
+                    Log.d(TAG, "Comment added successfully")
+                    _uiState.update { 
+                        it.copy(
+                            isAddingComment = false,
+                            newCommentText = ""
+                        ) 
+                    }
+                },
+                onFailure = { exception ->
+                    Log.e(TAG, "Error adding comment: ${exception.message}")
+                    _uiState.update { 
+                        it.copy(
+                            isAddingComment = false,
+                            commentError = exception.message ?: "Failed to add comment"
+                        ) 
+                    }
+                }
+            )
+        }
+    }
+    
+    fun deleteComment(commentId: String) {
+        val userId = auth.currentUser?.uid ?: return
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(commentError = null) }
+            
+            commentRepository.deleteComment(commentId, userId).fold(
+                onSuccess = {
+                    Log.d(TAG, "Comment deleted successfully")
+                    // The UI will update automatically via the Flow observation
+                },
+                onFailure = { exception ->
+                    Log.e(TAG, "Error deleting comment: ${exception.message}")
+                    _uiState.update { 
+                        it.copy(commentError = exception.message ?: "Failed to delete comment") 
+                    }
+                }
+            )
+        }
+    }
+    
+    fun updateCommentText(text: String) {
+        _uiState.update { it.copy(newCommentText = text) }
+    }
+    
+    fun clearCommentError() {
+        _uiState.update { it.copy(commentError = null) }
     }
     
     fun toggleFavorite() {
@@ -241,6 +355,11 @@ class CoinDetailViewModel @Inject constructor(
         }
     }
     
+    override fun onCleared() {
+        super.onCleared()
+        commentsJob?.cancel()
+    }
+    
     private fun getApiInterval(displayInterval: String): String {
         return when (displayInterval) {
             "1H" -> "1h"
@@ -269,5 +388,11 @@ data class CoinDetailUiState(
     val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
     val chartErrorMessage: String? = null,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    // Comment-related state
+    val comments: List<Comment> = emptyList(),
+    val isLoadingComments: Boolean = true,
+    val isAddingComment: Boolean = false,
+    val newCommentText: String = "",
+    val commentError: String? = null
 ) 

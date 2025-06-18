@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.aftekeli.currencytracker.ui.components.CommentSection
 import com.aftekeli.currencytracker.ui.viewmodel.CoinDetailViewModel
 import com.aftekeli.currencytracker.util.getCoinLogoResource
 import com.github.mikephil.charting.charts.LineChart
@@ -60,6 +61,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
+import com.google.firebase.auth.FirebaseAuth
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,6 +74,7 @@ fun CoinDetailScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val currentUser = FirebaseAuth.getInstance().currentUser
     
     // Pull to refresh state
     val pullRefreshState = rememberPullToRefreshState()
@@ -462,6 +465,23 @@ fun CoinDetailScreen(
                         }
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Comment Section
+                CommentSection(
+                    comments = uiState.comments,
+                    isLoadingComments = uiState.isLoadingComments,
+                    isAddingComment = uiState.isAddingComment,
+                    newCommentText = uiState.newCommentText,
+                    commentError = uiState.commentError,
+                    currentUserId = currentUser?.uid,
+                    isUserLoggedIn = currentUser != null,
+                    onCommentTextChange = viewModel::updateCommentText,
+                    onAddComment = viewModel::addComment,
+                    onDeleteComment = viewModel::deleteComment,
+                    onClearError = viewModel::clearCommentError
+                )
             }
             
             // Pull to refresh indicator

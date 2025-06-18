@@ -4,6 +4,8 @@ import com.aftekeli.currencytracker.data.repository.AuthRepository
 import com.aftekeli.currencytracker.data.repository.AuthRepositoryImpl
 import com.aftekeli.currencytracker.data.repository.CoinRepository
 import com.aftekeli.currencytracker.data.repository.CoinRepositoryImpl
+import com.aftekeli.currencytracker.data.repository.CommentRepository
+import com.aftekeli.currencytracker.data.repository.CommentRepositoryImpl
 import com.aftekeli.currencytracker.data.repository.UserRepository
 import com.aftekeli.currencytracker.data.repository.UserRepositoryImpl
 import com.google.firebase.auth.FirebaseAuth
@@ -39,6 +41,12 @@ abstract class RepositoryModule {
     abstract fun bindUserRepository(
         userRepositoryImpl: UserRepositoryImpl
     ): UserRepository
+    
+    @Binds
+    @Singleton
+    abstract fun bindCommentRepository(
+        commentRepositoryImpl: CommentRepositoryImpl
+    ): CommentRepository
 }
 
 @Module
