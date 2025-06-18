@@ -92,13 +92,18 @@ fun AppNavigation(
         // Portfolio Screen
         composable(ScreenRoutes.PortfolioScreen.route) {
             val marketsViewModel: MarketsViewModel = hiltViewModel()
-            val marketPrices = marketsViewModel.uiState.value.coins.associate { coin ->
-                coin.symbol to coin.lastPrice.toDouble()
+            val portfolioViewModel: com.aftekeli.currencytracker.ui.viewmodel.PortfolioViewModel = hiltViewModel()
+            val marketState = marketsViewModel.uiState.collectAsStateWithLifecycle().value
+            val marketPrices = marketState.tickers.associate { ticker ->
+                ticker.symbol to ticker.lastPrice.toDouble()
             }
             
+            val userId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+            
             PortfolioScreen(
-                userId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
-                marketPrices = marketPrices
+                userId = userId,
+                marketPrices = marketPrices,
+                viewModel = portfolioViewModel
             )
         }
     }

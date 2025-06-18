@@ -3,34 +3,72 @@ package com.aftekeli.currencytracker.util
 import com.aftekeli.currencytracker.R
 
 /**
- * Utility function to get the drawable resource ID for a coin logo based on its base asset symbol.
- * Returns null if no matching logo is found, allowing for fallback to a placeholder.
+ * Kripto para logoları için utility sınıfı.
+ * Kripto para sembollerine göre doğru logo kaynaklarını döndürür.
  */
-fun getCoinLogoResource(baseAsset: String): Int? {
-    val normalizedAsset = baseAsset.lowercase().trim()
+object CoinLogoUtil {
+
+    /**
+     * Verilen kripto para sembolü için logo kaynağını döndürür.
+     * Eğer sembol için logo yoksa null döner.
+     *
+     * @param symbol Kripto para sembolü (örn. "BTC", "ETH")
+     * @return Logo kaynağı ID'si veya null
+     */
+    fun getCoinLogoResource(symbol: String?): Int? {
+        if (symbol == null) return null
+        
+        return when (symbol.uppercase()) {
+            // Yeni eklenen logolar
+            "XRP" -> R.drawable.ic_logo_xrp
+            "SPK" -> R.drawable.ic_logo_spk
+            "BONK" -> R.drawable.ic_logo_bonk
+            "NXPC" -> R.drawable.ic_logo_nxpc
+            "BNB" -> R.drawable.ic_logo_bnb
+            "COOKIE" -> R.drawable.ic_logo_cookie
+            "AAVE" -> R.drawable.ic_logo_aave
+            "FLOKI" -> R.drawable.ic_logo_floki
+            "TAO" -> R.drawable.ic_logo_tao
+            
+            // Mevcut logolar
+            "BTC", "BITCOIN" -> R.drawable.ic_logo_btc
+            "ETH", "ETHEREUM" -> R.drawable.ic_logo_eth
+            "SOL", "SOLANA" -> R.drawable.ic_logo_sol
+            "DOGE", "DOGECOIN" -> R.drawable.ic_logo_doge
+            "ADA", "CARDANO" -> R.drawable.ic_logo_ada
+            "AVAX", "AVALANCHE" -> R.drawable.ic_logo_avax
+            "LINK", "CHAINLINK" -> R.drawable.ic_logo_link
+            "UNI", "UNISWAP" -> R.drawable.ic_logo_uni
+            
+            // Diğer mevcut logolar
+            "ALPACA" -> R.drawable.ic_logo_alpaca
+            "BAB" -> R.drawable.ic_logo_bab
+            "CETUS" -> R.drawable.ic_logo_cetus
+            "ENA" -> R.drawable.ic_logo_ena
+            "FDUSD" -> R.drawable.ic_logo_fdusd
+            "LTC", "LITECOIN" -> R.drawable.ic_logo_ltc
+            "PEPE" -> R.drawable.ic_logo_pepe
+            "RUNE", "THORCHAIN" -> R.drawable.ic_logo_rune
+            "SUI" -> R.drawable.ic_logo_sui
+            "TRX", "TRON" -> R.drawable.ic_logo_trx
+            "USDC" -> R.drawable.ic_logo_usdc
+            "WIF" -> R.drawable.ic_logo_wif
+            "WLD", "WORLDCOIN" -> R.drawable.ic_logo_wld
+            
+            // Eğer sembol için logo yoksa null döndür
+            else -> null
+        }
+    }
     
-    return when (normalizedAsset) {
-        "btc" -> R.drawable.ic_logo_btc
-        "eth" -> R.drawable.ic_logo_eth
-        "sol" -> R.drawable.ic_logo_sol
-        "ada" -> R.drawable.ic_logo_ada
-        "avax" -> R.drawable.ic_logo_avax
-        "bab" -> R.drawable.ic_logo_bab
-        "cetus" -> R.drawable.ic_logo_cetus
-        "doge" -> R.drawable.ic_logo_doge
-        "ena" -> R.drawable.ic_logo_ena
-        "fdusd" -> R.drawable.ic_logo_fdusd
-        "link" -> R.drawable.ic_logo_link
-        "ltc" -> R.drawable.ic_logo_ltc
-        "pepe" -> R.drawable.ic_logo_pepe
-        "rune" -> R.drawable.ic_logo_rune
-        "sui" -> R.drawable.ic_logo_sui
-        "trx" -> R.drawable.ic_logo_trx
-        "uni" -> R.drawable.ic_logo_uni
-        "usdc" -> R.drawable.ic_logo_usdc
-        "wif" -> R.drawable.ic_logo_wif
-        "wld" -> R.drawable.ic_logo_wld
-        "alpaca" -> R.drawable.ic_logo_alpaca
-        else -> null
+    /**
+     * Verilen kripto para sembolü için logo kaynağını döndürür.
+     * Eğer sembol için logo yoksa varsayılan logo döner.
+     *
+     * @param symbol Kripto para sembolü (örn. "BTC", "ETH")
+     * @param defaultLogo Varsayılan logo kaynağı ID'si
+     * @return Logo kaynağı ID'si
+     */
+    fun getCoinLogoResourceOrDefault(symbol: String?, defaultLogo: Int): Int {
+        return getCoinLogoResource(symbol) ?: defaultLogo
     }
 } 

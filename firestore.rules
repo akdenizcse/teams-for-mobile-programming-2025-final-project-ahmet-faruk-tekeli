@@ -30,27 +30,52 @@ service cloud.firestore {
       allow write: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
     
-    // Portföy öğeleri güvenlik kuralları
+    // Portföy öğeleri güvenlik kuralları - düzeltildi
     match /portfolios/{portfolioId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Kullanıcılar kendi portföy öğelerini okuyabilir
+      allow read: if request.auth != null && (
+        // Belge ID'si userId ile başlıyorsa veya userId alanı eşleşiyorsa
+        portfolioId.matches(request.auth.uid + '_.*') || 
+        (resource.data.userId == request.auth.uid)
+      );
+      
+      // Kullanıcılar kendi portföy öğelerini oluşturabilir
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Kullanıcılar kendi portföy öğelerini güncelleyebilir
       allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      
+      // Kullanıcılar kendi portföy öğelerini silebilir
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
     }
     
-    // Cüzdan güvenlik kuralları
+    // Cüzdan güvenlik kuralları - düzeltildi
     match /wallets/{walletId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Kullanıcılar kendi cüzdanlarını okuyabilir
+      allow read: if request.auth != null && (
+        walletId == request.auth.uid || 
+        (resource.data.userId == request.auth.uid)
+      );
+      
+      // Kullanıcılar kendi cüzdanlarını oluşturabilir ve güncelleyebilir
+      allow create, update: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
     
-    // İşlemler için güvenlik kuralları
+    // İşlemler için güvenlik kuralları - düzeltildi
     match /transactions/{transactionId} {
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Kullanıcılar kendi işlemlerini okuyabilir
+      allow read: if request.auth != null && (
+        resource.data.userId == request.auth.uid
+      );
+      
+      // Kullanıcılar yeni işlem oluşturabilir
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      
+      // Kullanıcılar kendi işlemlerini silebilir
       allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
-      allow update: if false; // İşlemler değiştirilemez
+      
+      // İşlemler değiştirilemez
+      allow update: if false;
     }
   }
 } 

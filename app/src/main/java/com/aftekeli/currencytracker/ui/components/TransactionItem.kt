@@ -1,19 +1,25 @@
 package com.aftekeli.currencytracker.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.aftekeli.currencytracker.R
 import com.aftekeli.currencytracker.data.model.Transaction
 import com.aftekeli.currencytracker.data.model.TransactionType
+import com.aftekeli.currencytracker.util.CoinLogoUtil
 import java.text.DecimalFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -34,6 +40,12 @@ fun TransactionItem(
     val isBuy = transaction.type == TransactionType.BUY
     val typeColor = if (isBuy) Color(0xFF4CAF50) else Color(0xFFF44336)
     val typeText = if (isBuy) "ALIŞ" else "SATIŞ"
+    
+    // Logo kaynağını al
+    val logoResourceId = CoinLogoUtil.getCoinLogoResourceOrDefault(
+        transaction.baseAsset, 
+        R.drawable.ic_crypto_default
+    )
     
     Card(
         modifier = modifier
@@ -72,6 +84,16 @@ fun TransactionItem(
                     )
                 }
             }
+            
+            // Kripto para logosu
+            Image(
+                painter = painterResource(id = logoResourceId),
+                contentDescription = "${transaction.baseAsset} logo",
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .padding(end = 8.dp)
+            )
             
             // İşlem detayları
             Column(

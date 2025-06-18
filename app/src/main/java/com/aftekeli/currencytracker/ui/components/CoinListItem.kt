@@ -25,8 +25,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.aftekeli.currencytracker.R
 import com.aftekeli.currencytracker.data.model.Coin
-import com.aftekeli.currencytracker.util.getCoinLogoResource
+import com.aftekeli.currencytracker.util.CoinLogoUtil
 import androidx.compose.foundation.Image
 import kotlin.math.abs
 
@@ -46,7 +47,7 @@ fun CoinListItem(
     }
 
     // Get logo resource if available
-    val logoResourceId = getCoinLogoResource(baseAsset)
+    val logoResourceId = CoinLogoUtil.getCoinLogoResource(baseAsset)
 
     Card(
         modifier = Modifier

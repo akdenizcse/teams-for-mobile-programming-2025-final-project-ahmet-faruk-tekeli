@@ -64,6 +64,52 @@ class PortfolioViewModel @Inject constructor(
         }
     }
     
+    /**
+     * Kullanıcı verilerini yeniler (pull-to-refresh için)
+     */
+    fun refreshData(userId: String) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+                
+                // Cüzdan verisini yenile
+                val wallet = walletRepository.getUserWallet(userId).first()
+                
+                // Portföy verilerini yenile
+                val portfolio = portfolioRepository.getUserPortfolio(userId).first()
+                
+                // İşlem verilerini yenile
+                val transactions = transactionRepository.getUserTransactions(userId).first()
+                
+                // UI state'i güncelle
+                _uiState.update { state ->
+                    state.copy(
+                        wallet = wallet ?: VirtualWallet(userId = userId),
+                        portfolio = portfolio,
+                        transactions = transactions,
+                        isLoading = false
+                    )
+                }
+                
+                _eventFlow.emit(PortfolioEvent.Success("Veriler güncellendi"))
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoading = false) }
+                _eventFlow.emit(PortfolioEvent.Error("Veriler güncellenirken hata oluştu: ${e.message}"))
+            }
+        }
+    }
+    
+    /**
+     * Market fiyatlarını günceller
+     */
+    fun updateMarketPrices(prices: Map<String, Double>) {
+        _uiState.update { state ->
+            state.copy(
+                marketPrices = prices
+            )
+        }
+    }
+    
     fun buyCoin(
         userId: String,
         symbol: String,
@@ -195,17 +241,6 @@ class PortfolioViewModel @Inject constructor(
             }
         }
     }
-    
-    fun createWalletIfNeeded(userId: String) {
-        viewModelScope.launch {
-            val wallet = VirtualWallet(
-                userId = userId,
-                balance = 1000.0 // Başlangıç bakiyesi
-            )
-            
-            walletRepository.createOrUpdateWallet(wallet)
-        }
-    }
 }
 
 /**
@@ -216,13 +251,17 @@ data class PortfolioUiState(
     val portfolio: List<PortfolioItem> = emptyList(),
     val transactions: List<Transaction> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val marketPrices: Map<String, Double> = emptyMap()
 ) {
-    val totalValue: Double
-        get() = wallet.balance + (portfolio.sumOf { it.totalInvested })
-        
     val totalPortfolioValue: Double
-        get() = portfolio.sumOf { it.totalInvested }
+        get() = portfolio.sumOf { item ->
+            val currentPrice = marketPrices[item.symbol] ?: item.averageBuyPrice
+            item.getCurrentValue(currentPrice)
+        }
+    
+    val totalValue: Double
+        get() = wallet.balance + totalPortfolioValue
 }
 
 /**

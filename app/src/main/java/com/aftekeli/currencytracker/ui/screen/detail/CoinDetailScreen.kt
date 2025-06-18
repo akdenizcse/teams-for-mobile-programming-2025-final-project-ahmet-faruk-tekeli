@@ -63,7 +63,7 @@ import com.aftekeli.currencytracker.ui.components.CommentSection
 import com.aftekeli.currencytracker.ui.components.TradingDialog
 import com.aftekeli.currencytracker.ui.viewmodel.CoinDetailViewModel
 import com.aftekeli.currencytracker.ui.viewmodel.PortfolioViewModel
-import com.aftekeli.currencytracker.util.getCoinLogoResource
+import com.aftekeli.currencytracker.util.CoinLogoUtil
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
@@ -100,7 +100,6 @@ fun CoinDetailScreen(
     LaunchedEffect(currentUser) {
         currentUser?.uid?.let { userId ->
             portfolioViewModel.loadUserData(userId)
-            portfolioViewModel.createWalletIfNeeded(userId)
         }
     }
     
@@ -226,7 +225,7 @@ fun CoinDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     // Add coin logo if available
-                                    val logoResourceId = getCoinLogoResource(coin.baseAsset)
+                                    val logoResourceId = CoinLogoUtil.getCoinLogoResource(coin.baseAsset)
                                     if (logoResourceId != null) {
                                         Box(
                                             modifier = Modifier
